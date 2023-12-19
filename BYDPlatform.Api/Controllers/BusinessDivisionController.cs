@@ -1,5 +1,7 @@
+using BYDPlatform.Api.Filters;
 using BYDPlatform.Api.Models;
 using BYDPlatform.Application.BusinessDivision.Commands.CreateBusinessDivision;
+using BYDPlatform.Application.BusinessDivision.Commands.DeleteBusinessDivision;
 using BYDPlatform.Application.BusinessDivision.Commands.UpdateBusinessDivision;
 using BYDPlatform.Application.BusinessDivision.Queries;
 using BYDPlatform.Domain.Entities;
@@ -22,6 +24,7 @@ public class BusinessDivisionController:ControllerBase
 
     [HttpPost]
     [Route("/create")]
+    [ServiceFilter(typeof(LogFilterAttribute))]
     public async Task<ApiResponse<BusinessDivision>> CreateBusinessDivision([FromBody] CreateBusinessDivisionCommand command)
     {
         var res = await _mediator.Send(command);
@@ -29,6 +32,7 @@ public class BusinessDivisionController:ControllerBase
     }
 
     [HttpGet]
+    [ServiceFilter(typeof(LogFilterAttribute))]
     public async Task<ApiResponse<BusinessDivision>> GetBu([FromQuery] GetBusinessDivisionQuery query)
     {
         BusinessDivision bu = await _mediator.Send(query);
@@ -36,6 +40,7 @@ public class BusinessDivisionController:ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [ServiceFilter(typeof(LogFilterAttribute))]
     public async Task<ApiResponse<BusinessDivision>> Update(int id, [FromBody] UpdateBusinessDivisionCommand command)
     {
         if (id != command.Id)
@@ -44,5 +49,12 @@ public class BusinessDivisionController:ControllerBase
         }
 
         return ApiResponse<BusinessDivision>.Success(await _mediator.Send(command));
+    }
+
+    [HttpDelete("{id:int}")]
+    [ServiceFilter(typeof(LogFilterAttribute))]
+    public async Task<ApiResponse<object>> Delete(int id)
+    {
+        return ApiResponse<object>.Success(await _mediator.Send(new DeleteBusinessDivisionCommand { Id = id }));
     }
 }
