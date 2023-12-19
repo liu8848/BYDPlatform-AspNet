@@ -1,0 +1,48 @@
+using BYDPlatform.Api.Models;
+using BYDPlatform.Application.BusinessDivision.Commands.CreateBusinessDivision;
+using BYDPlatform.Application.BusinessDivision.Commands.UpdateBusinessDivision;
+using BYDPlatform.Application.BusinessDivision.Queries;
+using BYDPlatform.Domain.Entities;
+using MediatR;
+using Microsoft.AspNetCore.Mvc;
+
+namespace BYDPlatform.Api.Controllers;
+
+[ApiController]
+[Route("[controller]")]
+public class BusinessDivisionController:ControllerBase
+{
+    private readonly IMediator _mediator;
+
+    public BusinessDivisionController(IMediator mediator)
+    {
+        _mediator = mediator;
+    }
+
+
+    [HttpPost]
+    [Route("/create")]
+    public async Task<ApiResponse<BusinessDivision>> CreateBusinessDivision([FromBody] CreateBusinessDivisionCommand command)
+    {
+        var res = await _mediator.Send(command);
+        return ApiResponse<BusinessDivision>.Success(res);
+    }
+
+    [HttpGet]
+    public async Task<ApiResponse<BusinessDivision>> GetBu([FromQuery] GetBusinessDivisionQuery query)
+    {
+        BusinessDivision bu = await _mediator.Send(query);
+        return ApiResponse<BusinessDivision>.Success(bu);
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<ApiResponse<BusinessDivision>> Update(int id, [FromBody] UpdateBusinessDivisionCommand command)
+    {
+        if (id != command.Id)
+        {
+            return ApiResponse<BusinessDivision>.Fail("Query id not match with body");
+        }
+
+        return ApiResponse<BusinessDivision>.Success(await _mediator.Send(command));
+    }
+}

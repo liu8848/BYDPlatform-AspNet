@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\BYDPlatform.Domain\BYDPlatform.Domain.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="Common\Interfaces\IRepositories\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Remove="Common\Interfaces\IRepositories\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Common\Interfaces\IRepositories\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
+      <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.2" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="BusinessDivision\EventHandlers\" />
+    </ItemGroup>
+
+</Project>
