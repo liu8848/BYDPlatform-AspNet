@@ -1,3 +1,4 @@
+using System.Dynamic;
 using BYDPlatform.Api.Filters;
 using BYDPlatform.Api.Models;
 using BYDPlatform.Application.BusinessDivision.Commands.CreateBusinessDivision;
@@ -60,9 +61,9 @@ public class BusinessDivisionController:ControllerBase
     }
 
     [HttpGet("/BuList")]
-    public async Task<ApiResponse<PaginatedList<BusinessDivision>>> GetBusinessDivisionWithPagination(
+    public async Task<ApiResponse<PaginatedList<ExpandoObject>>> GetBusinessDivisionWithPagination(
         [FromQuery] GetBusinessDivisionWithPaginationQuery query)
     {
-        return ApiResponse<PaginatedList<BusinessDivision>>.Success(await _mediator.Send(query));
+        return ApiResponse<PaginatedList<ExpandoObject>>.Success(await _mediator.Send(query));
     }
 }

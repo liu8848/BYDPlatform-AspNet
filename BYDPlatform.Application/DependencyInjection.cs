@@ -1,5 +1,7 @@
 using System.Reflection;
 using BYDPlatform.Application.Common.Behaviors;
+using BYDPlatform.Application.Common.Implements;
+using BYDPlatform.Application.Common.Interfaces;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +17,9 @@ public static class DependencyInjection
 
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
+
+        services.AddScoped(typeof(IDataShaper<>), typeof(DataShaper<>));
+        
         return services;
     }
 }
