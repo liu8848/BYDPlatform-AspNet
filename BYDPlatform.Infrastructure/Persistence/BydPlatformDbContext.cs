@@ -3,14 +3,16 @@ using BYDPlatform.Domain.Base;
 using BYDPlatform.Domain.Base.Interfaces;
 using BYDPlatform.Domain.Entities;
 using BYDPlatform.Domain.Enums;
+using BYDPlatform.Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 namespace BydPlatform.Infrastructure.Persistence;
 
-public class BydPlatformDbContext : DbContext
+public class BydPlatformDbContext : IdentityDbContext<ApplicationUser>
 {
-    public required IDomainEventService _domainEventService { protected get; init; }
+    private readonly IDomainEventService _domainEventService;
 
     public BydPlatformDbContext(DbContextOptions<BydPlatformDbContext> options,
         IDomainEventService domainEventService) : base(options)
@@ -53,9 +55,11 @@ public class BydPlatformDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<User>().ToTable("user");
         modelBuilder.Entity<RegisterFactory>().ToTable("register_factory");
         modelBuilder.Entity<BusinessDivision>();
+        
     }
 
     private async Task DispatchEvents(DomainEvent[] events)

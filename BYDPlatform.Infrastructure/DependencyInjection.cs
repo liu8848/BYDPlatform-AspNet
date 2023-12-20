@@ -1,10 +1,15 @@
+using System.Text;
 using Autofac;
 using BYDPlatform.Application.Common.Interfaces;
+using BYDPlatform.Infrastructure.Identity;
 using BydPlatform.Infrastructure.Persistence;
 using BYDPlatform.Infrastructure.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 
 namespace BYDPlatform.Infrastructure;
 
@@ -24,6 +29,45 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IDomainEventService, DomainEventService>();
+
+        services.AddIdentity<ApplicationUser, IdentityRole>(o =>
+            {
+                o.Password.RequireDigit = true;
+                o.Password.RequiredLength = 6;
+                o.Password.RequireLowercase = true;
+                o.Password.RequireUppercase = false;
+                o.Password.RequireNonAlphanumeric = false;
+                o.User.RequireUniqueEmail = true;
+            })
+            .AddEntityFrameworkStores<BydPlatformDbContext>()
+            .AddDefaultTokenProviders();
+
+        services.AddTransient<IIdentityService, IdentityService>();
+
+        services.AddAuthentication(opt =>
+            {
+                opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+
+                    ValidIssuer = configuration.GetSection("JwtSettings")["validIssuer"],
+                    ValidAudience = configuration.GetSection("JwtSettings")["validAudience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(
+                            configuration.GetSection("JwtSettings")["SecretKey"]?? "BYDPlatformApiSecretKey"))
+                };
+            });
+        services.AddAuthorization(options =>
+            options.AddPolicy("OnlyAdmin", policy => policy.RequireRole("Administrator")));
+            
         return services;
     }
 

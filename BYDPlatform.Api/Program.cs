@@ -1,5 +1,3 @@
-using Autofac;
-using Autofac.Extensions.DependencyInjection;
 using BYDPlatform.Api.Extensions;
 using BYDPlatform.Api.Filters;
 using BYDPlatform.Application;
@@ -7,7 +5,6 @@ using BYDPlatform.Application.Common.Interfaces;
 using BYDPlatform.Infrastructure;
 using BYDPlatform.Infrastructure.Log;
 using BYDPlatform.Infrastructure.Repositories;
-using BYDPlatform.Infrastructure.Services;
 using Serilog;
 
 namespace BYDPlatform.Api;
@@ -31,7 +28,8 @@ public class Program
         builder.Services.AddApplication();
         builder.Services.AddInfrastructure(builder.Configuration);
         builder.Services.AddScoped<LogFilterAttribute>();
-
+        
+        
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
         builder.Services.AddControllers();
@@ -53,6 +51,9 @@ public class Program
 
         app.UseHttpsRedirection();
 
+        app.UseAuthentication();
+        app.UseAuthorization();
+        
         app.MapControllers();
         
         app.Run();
