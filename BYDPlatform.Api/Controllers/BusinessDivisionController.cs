@@ -8,6 +8,7 @@ using BYDPlatform.Application.BusinessDivision.Queries;
 using BYDPlatform.Application.Common.Model;
 using BYDPlatform.Domain.Entities;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BYDPlatform.Api.Controllers;
@@ -35,6 +36,7 @@ public class BusinessDivisionController:ControllerBase
 
     [HttpGet]
     [ServiceFilter(typeof(LogFilterAttribute))]
+    [Authorize(Policy = "OnlyAdmin")]
     public async Task<ApiResponse<BusinessDivision>> GetBu([FromQuery] GetBusinessDivisionQuery query)
     {
         BusinessDivision bu = await _mediator.Send(query);

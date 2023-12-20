@@ -1,8 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using BYDPlatform.Application.Common.Interfaces;
 using BYDPlatform.Application.Common.Model;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -48,12 +50,28 @@ public class IdentityService:IIdentityService
         return result;
     }
 
-    public async Task<string> CreateTokenAsync()
+    public async Task<ApplicationToken> CreateTokenAsync(bool populateExpiry)
     {
         var signingCredentials = GetSigningCredentials();
         var claims = await GetClaims();
         var tokenOptions = GenerateTokenOptions(signingCredentials, claims);
-        return new JwtSecurityTokenHandler().WriteToken(tokenOptions);
+        var refreshToken = GeneratetRefreshToken();
+        _applicationUser!.RefreshToken = refreshToken;
+        if(populateExpiry)
+            _applicationUser!.RefreshTokenExpiryTime=DateTime.Now.AddDays(7);
+        await _userManager.UpdateAsync(_applicationUser);
+
+        var accessToken = new JwtSecurityTokenHandler().WriteToken(tokenOptions);
+        return new ApplicationToken(accessToken, refreshToken);
+    }
+
+    private string GeneratetRefreshToken()
+    {
+        var randomNumber = new byte[32];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(randomNumber);
+
+        return Convert.ToBase64String(randomNumber);
     }
 
     private SigningCredentials GetSigningCredentials()
@@ -88,5 +106,41 @@ public class IdentityService:IIdentityService
             signingCredentials: signingCredentials
         );
         return tokenOptions;
+    }
+
+    public async Task<ApplicationToken> RefreshTokenAsync(ApplicationToken token)
+    {
+        var principal = GetPrincipalFromExpiredToken(token.AccessToken);
+        var user = await _userManager.FindByNameAsync(principal.Identity?.Name);
+        if (user == null || user.RefreshToken != token.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.Now)
+        {
+            throw new BadHttpRequestException("provided token has some invalid value");
+        }
+
+        _applicationUser = user;
+        return await CreateTokenAsync(true);
+    }
+
+    private ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
+    {
+        var jwtSettings = _configuration.GetSection("JwtSettings");
+        var tokenValidationParameters = new TokenValidationParameters {
+            ValidateAudience = true,
+            ValidateIssuer = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["JwtSettings"]?? "BYDPlatformApiSecretKey")), ValidateLifetime = true,
+            ValidIssuer = jwtSettings["validIssuer"],
+            ValidAudience = jwtSettings["validAudience"]
+        };
+        
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
+        if (securityToken is not JwtSecurityToken jwtSecurityToken || 
+            !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+        {
+            throw new SecurityTokenException("Invalid token");
+        }
+
+        return principal;
     }
 }

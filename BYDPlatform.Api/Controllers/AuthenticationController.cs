@@ -24,6 +24,14 @@ public class AuthenticationController:ControllerBase
             return Unauthorized();
         }
 
-        return Ok(new { Token = await _identityService.CreateTokenAsync() });
+        var token = await _identityService.CreateTokenAsync(true);
+        return Ok(token);
+    }
+
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh([FromBody] ApplicationToken token)
+    {
+        var tokenToReturn = await _identityService.RefreshTokenAsync(token);
+        return Ok(tokenToReturn);
     }
 }

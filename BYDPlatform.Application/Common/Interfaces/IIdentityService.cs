@@ -6,5 +6,7 @@ public interface IIdentityService
 {
     Task<string> CreateUserAsync(string userName, string password);
     Task<bool> ValidateUserAsync(UserForAuthentication userForAuthentication);
-    Task<string> CreateTokenAsync();
+    Task<ApplicationToken> CreateTokenAsync(bool populateExpiry);
+
+    Task<ApplicationToken> RefreshTokenAsync(ApplicationToken token);
 }
