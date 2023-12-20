@@ -4,6 +4,7 @@ using BYDPlatform.Application.BusinessDivision.Commands.CreateBusinessDivision;
 using BYDPlatform.Application.BusinessDivision.Commands.DeleteBusinessDivision;
 using BYDPlatform.Application.BusinessDivision.Commands.UpdateBusinessDivision;
 using BYDPlatform.Application.BusinessDivision.Queries;
+using BYDPlatform.Application.Common.Model;
 using BYDPlatform.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -56,5 +57,12 @@ public class BusinessDivisionController:ControllerBase
     public async Task<ApiResponse<object>> Delete(int id)
     {
         return ApiResponse<object>.Success(await _mediator.Send(new DeleteBusinessDivisionCommand { Id = id }));
+    }
+
+    [HttpGet("/BuList")]
+    public async Task<ApiResponse<PaginatedList<BusinessDivision>>> GetBusinessDivisionWithPagination(
+        [FromQuery] GetBusinessDivisionWithPaginationQuery query)
+    {
+        return ApiResponse<PaginatedList<BusinessDivision>>.Success(await _mediator.Send(query));
     }
 }
