@@ -2,7 +2,6 @@ using BYDPlatform.Application.Common.Interfaces;
 using BYDPlatform.Domain.Base;
 using BYDPlatform.Domain.Base.Interfaces;
 using BYDPlatform.Domain.Entities;
-using BYDPlatform.Domain.Enums;
 using BYDPlatform.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -13,12 +12,15 @@ namespace BydPlatform.Infrastructure.Persistence;
 public class BydPlatformDbContext : IdentityDbContext<ApplicationUser>
 {
     private readonly IDomainEventService _domainEventService;
+    private readonly ICurrentUserService _currentUserService;
 
     public BydPlatformDbContext(DbContextOptions<BydPlatformDbContext> options,
-        IDomainEventService domainEventService) : base(options)
+        IDomainEventService domainEventService,
+        ICurrentUserService currentUserService) : base(options)
     {
         Log.Information($"注入服务:{typeof(BydPlatformDbContext).FullName}");
         _domainEventService = domainEventService;
+        _currentUserService = currentUserService;
     }
 
     public DbSet<User> Users => Set<User>();
@@ -31,11 +33,11 @@ public class BydPlatformDbContext : IdentityDbContext<ApplicationUser>
             switch (entry.State)
             {
                 case EntityState.Added:
-                    entry.Entity.CreatedBy = "Anonymous";
+                    entry.Entity.CreatedBy = _currentUserService.UserName;
                     entry.Entity.Created = DateTime.UtcNow;
                     break;
                 case EntityState.Modified:
-                    entry.Entity.LastModifiedBy = "Anonymous";
+                    entry.Entity.LastModifiedBy = _currentUserService.UserName;
                     entry.Entity.LastModified = DateTime.UtcNow;
                     break;
             }

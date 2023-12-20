@@ -5,6 +5,7 @@ using BYDPlatform.Infrastructure.Identity;
 using BydPlatform.Infrastructure.Persistence;
 using BYDPlatform.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -67,7 +68,8 @@ public static class DependencyInjection
             });
         services.AddAuthorization(options =>
             options.AddPolicy("OnlyAdmin", policy => policy.RequireRole("Administrator")));
-            
+
+        services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         return services;
     }
 

@@ -1,6 +1,7 @@
 using BYDPlatform.Api.Extensions;
 using BYDPlatform.Api.Filters;
 using BYDPlatform.Application;
+using BYDPlatform.Application.Common.Implements;
 using BYDPlatform.Application.Common.Interfaces;
 using BYDPlatform.Infrastructure;
 using BYDPlatform.Infrastructure.Log;
@@ -36,6 +37,8 @@ public class Program
 
         builder.Services.AddScoped(typeof(IRepository<>), typeof(RepositoryBase<>));
 
+        builder.Services.AddSingleton<ICurrentUserService, CurrentUserService>();
+        
         var app = builder.Build();
         
         app.UseGlobalExceptionHandler();

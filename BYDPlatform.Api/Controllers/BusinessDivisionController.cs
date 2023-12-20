@@ -27,6 +27,7 @@ public class BusinessDivisionController:ControllerBase
 
     [HttpPost]
     [Route("/create")]
+    [Authorize(Policy = "OnlyAdmin")]
     [ServiceFilter(typeof(LogFilterAttribute))]
     public async Task<ApiResponse<BusinessDivision>> CreateBusinessDivision([FromBody] CreateBusinessDivisionCommand command)
     {
@@ -44,6 +45,7 @@ public class BusinessDivisionController:ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Policy = "OnlyAdmin")]
     [ServiceFilter(typeof(LogFilterAttribute))]
     public async Task<ApiResponse<BusinessDivision>> Update(int id, [FromBody] UpdateBusinessDivisionCommand command)
     {
