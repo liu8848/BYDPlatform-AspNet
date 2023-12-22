@@ -5,6 +5,7 @@ using BYDPlatform.Application.Common.Model;
 using BYDPlatform.Application.Services.BusinessDivision;
 using BYDPlatform.Domain.DTOs.BusinessDivision;
 using BYDPlatform.Domain.Entities;
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,9 +17,13 @@ public class BusinessDivisionController:ControllerBase
 {
     private readonly IBusinessDivisionService _businessDivisionService;
 
-    public BusinessDivisionController(IBusinessDivisionService businessDivisionService)
+    private readonly IValidator<BusinessDivisionCreateOrUpdateDto> _validator;
+
+    public BusinessDivisionController(IBusinessDivisionService businessDivisionService,
+        IValidator<BusinessDivisionCreateOrUpdateDto> validator)
     {
         _businessDivisionService = businessDivisionService;
+        _validator = validator;
     }
 
     [HttpGet("{id:int}")]
@@ -49,6 +54,10 @@ public class BusinessDivisionController:ControllerBase
     [ServiceFilter(typeof(LogFilterAttribute))]
     public async Task<ApiResponse<BusinessDivision>> CreateBusinessDivision([FromBody] BusinessDivisionCreateOrUpdateDto createOrUpdateDto)
     {
+        if (!(await _validator.ValidateAsync(createOrUpdateDto)).IsValid)
+        {
+            await _validator.ValidateAndThrowAsync(createOrUpdateDto);
+        }
         var bu = await _businessDivisionService.Create(createOrUpdateDto);
         return ApiResponse<BusinessDivision>.Success(bu);
     }
