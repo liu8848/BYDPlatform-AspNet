@@ -1,8 +1,6 @@
 using System.Dynamic;
 using BYDPlatform.Api.Filters;
 using BYDPlatform.Api.Models;
-using BYDPlatform.Application.BusinessDivision.Commands.DeleteBusinessDivision;
-using BYDPlatform.Application.BusinessDivision.Commands.UpdateBusinessDivision;
 using BYDPlatform.Application.BusinessDivision.Queries;
 using BYDPlatform.Application.Common.Model;
 using BYDPlatform.Application.Services.BusinessDivision;
@@ -15,15 +13,13 @@ using Microsoft.AspNetCore.Mvc;
 namespace BYDPlatform.Api.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("BusinessDivision")]
 public class BusinessDivisionController:ControllerBase
 {
-    private readonly IMediator _mediator;
     private readonly IBusinessDivisionService _businessDivisionService;
 
-    public BusinessDivisionController(IMediator mediator,IBusinessDivisionService businessDivisionService)
+    public BusinessDivisionController(IBusinessDivisionService businessDivisionService)
     {
-        _mediator = mediator;
         _businessDivisionService = businessDivisionService;
     }
 
@@ -34,58 +30,55 @@ public class BusinessDivisionController:ControllerBase
         return ApiResponse<BusinessDivision>.Success(businessDivision);
     }
 
-    [HttpGet("/queryList")]
+    [HttpGet("queryList")]
     public async Task<ApiResponse<List<BusinessDivision>>> GetQueryList([FromQuery] BusinessDivisionQueryDto queryDto)
     {
         var results = await _businessDivisionService.GetListQuery(queryDto);
         return ApiResponse<List<BusinessDivision>>.Success(results);
     }
-    
 
-
-    [HttpPost]
-    [Route("/create")]
-    [Authorize(Policy = "OnlyAdmin")]
-    [ServiceFilter(typeof(LogFilterAttribute))]
-    public async Task<ApiResponse<BusinessDivision>> CreateBusinessDivision([FromBody] BusinessDivisionCreateDivision createDto)
+    [HttpGet("pageQueryList")]
+    public async Task<ApiResponse<PaginatedList<BusinessDivision>>> GetPageQueryList(
+        [FromQuery] BusinessDivisionQueryDto query)
     {
-        var bu = await _businessDivisionService.Create(createDto);
-        return ApiResponse<BusinessDivision>.Success(bu);
+        var result = await _businessDivisionService.GetPageQueryList(query);
+        return ApiResponse<PaginatedList<BusinessDivision>>.Success(result);
     }
-
-    [HttpGet]
-    [ServiceFilter(typeof(LogFilterAttribute))]
+    
+    [HttpPost]
+    [Route("create")]
     [Authorize(Policy = "OnlyAdmin")]
-    public async Task<ApiResponse<BusinessDivision>> GetBu([FromQuery] GetBusinessDivisionQuery query)
+    [ServiceFilter(typeof(LogFilterAttribute))]
+    public async Task<ApiResponse<BusinessDivision>> CreateBusinessDivision([FromBody] BusinessDivisionCreateOrUpdateDto createOrUpdateDto)
     {
-        BusinessDivision bu = await _mediator.Send(query);
+        var bu = await _businessDivisionService.Create(createOrUpdateDto);
         return ApiResponse<BusinessDivision>.Success(bu);
     }
 
     [HttpPut("{id:int}")]
     [Authorize(Policy = "OnlyAdmin")]
     [ServiceFilter(typeof(LogFilterAttribute))]
-    public async Task<ApiResponse<BusinessDivision>> Update(int id, [FromBody] UpdateBusinessDivisionCommand command)
+    public async Task<ApiResponse<BusinessDivision>> Update(int id, [FromBody] BusinessDivisionCreateOrUpdateDto update)
     {
-        if (id != command.Id)
+        if (id != update.Id)
         {
             return ApiResponse<BusinessDivision>.Fail("Query id not match with body");
         }
 
-        return ApiResponse<BusinessDivision>.Success(await _mediator.Send(command));
+        return ApiResponse<BusinessDivision>.Success(await _businessDivisionService.Update(update));
     }
 
     [HttpDelete("{id:int}")]
     [ServiceFilter(typeof(LogFilterAttribute))]
     public async Task<ApiResponse<object>> Delete(int id)
     {
-        return ApiResponse<object>.Success(await _mediator.Send(new DeleteBusinessDivisionCommand { Id = id }));
+        return ApiResponse<object>.Success( await _businessDivisionService.Delete(id));
     }
 
-    [HttpGet("/BuList")]
+    [HttpGet("BuList")]
     public async Task<ApiResponse<PaginatedList<ExpandoObject>>> GetBusinessDivisionWithPagination(
-        [FromQuery] GetBusinessDivisionWithPaginationQuery query)
+        [FromQuery] BusinessDivisionQueryDto query)
     {
-        return ApiResponse<PaginatedList<ExpandoObject>>.Success(await _mediator.Send(query));
+        return ApiResponse<PaginatedList<ExpandoObject>>.Success(await _businessDivisionService.GetPageQueryShapeList(query));
     }
 }

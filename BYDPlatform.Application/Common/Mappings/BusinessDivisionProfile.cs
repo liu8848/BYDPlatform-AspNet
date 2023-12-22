@@ -7,7 +7,7 @@ public class BusinessDivisionProfile:Profile
 {
     public BusinessDivisionProfile()
     {
-        CreateMap<BusinessDivisionCreateDivision, Domain.Entities.BusinessDivision>()
+        CreateMap<BusinessDivisionCreateOrUpdateDto, Domain.Entities.BusinessDivision>()
             .ForMember(dest => dest.BuName, 
                 opt 
                     => opt.MapFrom(src => src.BuName));
