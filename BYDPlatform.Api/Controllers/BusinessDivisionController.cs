@@ -1,12 +1,10 @@
 using System.Dynamic;
 using BYDPlatform.Api.Filters;
 using BYDPlatform.Api.Models;
-using BYDPlatform.Application.BusinessDivision.Queries;
 using BYDPlatform.Application.Common.Model;
 using BYDPlatform.Application.Services.BusinessDivision;
 using BYDPlatform.Domain.DTOs.BusinessDivision;
 using BYDPlatform.Domain.Entities;
-using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

@@ -104,10 +104,22 @@ namespace BYDPlatform.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("register_factory", null, t =>
+                    b.ToTable("register_factory", t =>
                         {
                             t.HasComment("备案工厂表");
                         });
+                });
+
+            modelBuilder.Entity("BYDPlatform.Domain.Entities.Test", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int(11)")
+                        .HasColumnName("id");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("test");
                 });
 
             modelBuilder.Entity("BYDPlatform.Domain.Entities.User", b =>
@@ -152,7 +164,7 @@ namespace BYDPlatform.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("user", null, t =>
+                    b.ToTable("user", t =>
                         {
                             t.HasComment("用户表");
                         });

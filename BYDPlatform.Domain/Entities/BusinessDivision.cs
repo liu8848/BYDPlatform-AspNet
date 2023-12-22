@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using BYDPlatform.Domain.Attributes;
 using BYDPlatform.Domain.Base;
 using BYDPlatform.Domain.Base.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace BYDPlatform.Domain.Entities;
 
 
+[Entity]
 [Table("business_division")]
 public class BusinessDivision:AuditableEntity,IEntity<int>,IHasDomainEvent
 {

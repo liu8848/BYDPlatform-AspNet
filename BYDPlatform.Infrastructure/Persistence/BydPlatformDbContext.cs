@@ -1,4 +1,7 @@
+using System.Reflection;
+using System.Runtime.InteropServices;
 using BYDPlatform.Application.Common.Interfaces;
+using BYDPlatform.Domain.Attributes;
 using BYDPlatform.Domain.Base;
 using BYDPlatform.Domain.Base.Interfaces;
 using BYDPlatform.Domain.Entities;
@@ -57,10 +60,12 @@ public class BydPlatformDbContext : IdentityDbContext<ApplicationUser>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.Entity<User>();
-        modelBuilder.Entity<RegisterFactory>();
-        modelBuilder.Entity<BusinessDivision>();
         
+        List<Type> types = GetAllAssemblyEntities();
+        foreach (var type in types)
+        {
+            modelBuilder.Entity(type);
+        }
     }
 
     private async Task DispatchEvents(DomainEvent[] events)
@@ -70,5 +75,43 @@ public class BydPlatformDbContext : IdentityDbContext<ApplicationUser>
             @event.IsPublished = true;
             await _domainEventService.Publish(@event);
         }
+    }
+
+    private List<Type> GetAllAssemblyEntities()
+    {
+        var allAssemblies = AppDomain.CurrentDomain.GetAssemblies().ToList();
+
+        HashSet<string> loadedAssemblies = new();
+
+        foreach (var item in allAssemblies)
+        {
+            loadedAssemblies.Add(item.FullName!);
+        }
+
+        Queue<Assembly> assembliesToCheck = new();
+        assembliesToCheck.Enqueue(Assembly.GetEntryAssembly()!);
+
+        while (assembliesToCheck.Any())
+        {
+            var assemblyToCheck = assembliesToCheck.Dequeue();
+            foreach (var reference in assemblyToCheck!.GetReferencedAssemblies())
+            {
+                if (!loadedAssemblies.Contains(reference.FullName))
+                {
+                    var assembly = Assembly.Load(reference);
+                    assembliesToCheck.Enqueue(assembly);
+                    loadedAssemblies.Add(reference.FullName);
+                    allAssemblies.Add(assembly);
+                }
+            }
+        }
+
+        var types = allAssemblies.SelectMany(t => t.GetTypes())
+            .Where(
+                t =>
+                    t.GetCustomAttributes(typeof(EntityAttribute), false).Length > 0
+                    && t.IsClass && !t.IsAbstract
+            ).ToList();
+        return types;
     }
 }

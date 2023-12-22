@@ -1,11 +1,14 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using BYDPlatform.Domain.Attributes;
 using BYDPlatform.Domain.Base;
 using BYDPlatform.Domain.Base.Interfaces;
 using BYDPlatform.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace BYDPlatform.Domain.Entities;
+
+[Entity]
 [Table("register_factory")]
 [Comment("备案工厂表")]
 public class RegisterFactory:AuditableEntity,IEntity<int>,IHasDomainEvent
