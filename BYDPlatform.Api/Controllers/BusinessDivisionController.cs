@@ -1,11 +1,12 @@
 using System.Dynamic;
 using BYDPlatform.Api.Filters;
 using BYDPlatform.Api.Models;
-using BYDPlatform.Application.BusinessDivision.Commands.CreateBusinessDivision;
 using BYDPlatform.Application.BusinessDivision.Commands.DeleteBusinessDivision;
 using BYDPlatform.Application.BusinessDivision.Commands.UpdateBusinessDivision;
 using BYDPlatform.Application.BusinessDivision.Queries;
 using BYDPlatform.Application.Common.Model;
+using BYDPlatform.Application.Services.BusinessDivision;
+using BYDPlatform.Domain.DTOs.BusinessDivision;
 using BYDPlatform.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -18,21 +19,38 @@ namespace BYDPlatform.Api.Controllers;
 public class BusinessDivisionController:ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly IBusinessDivisionService _businessDivisionService;
 
-    public BusinessDivisionController(IMediator mediator)
+    public BusinessDivisionController(IMediator mediator,IBusinessDivisionService businessDivisionService)
     {
         _mediator = mediator;
+        _businessDivisionService = businessDivisionService;
     }
+
+    [HttpGet("{id:int}")]
+    public async Task<ApiResponse<BusinessDivision>> getOne(int id)
+    {
+        var businessDivision = await _businessDivisionService.GetById(id);
+        return ApiResponse<BusinessDivision>.Success(businessDivision);
+    }
+
+    [HttpGet("/queryList")]
+    public async Task<ApiResponse<List<BusinessDivision>>> GetQueryList([FromQuery] BusinessDivisionQueryDto queryDto)
+    {
+        var results = await _businessDivisionService.GetListQuery(queryDto);
+        return ApiResponse<List<BusinessDivision>>.Success(results);
+    }
+    
 
 
     [HttpPost]
     [Route("/create")]
     [Authorize(Policy = "OnlyAdmin")]
     [ServiceFilter(typeof(LogFilterAttribute))]
-    public async Task<ApiResponse<BusinessDivision>> CreateBusinessDivision([FromBody] CreateBusinessDivisionCommand command)
+    public async Task<ApiResponse<BusinessDivision>> CreateBusinessDivision([FromBody] BusinessDivisionCreateDivision createDto)
     {
-        var res = await _mediator.Send(command);
-        return ApiResponse<BusinessDivision>.Success(res);
+        var bu = await _businessDivisionService.Create(createDto);
+        return ApiResponse<BusinessDivision>.Success(bu);
     }
 
     [HttpGet]

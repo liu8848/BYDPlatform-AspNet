@@ -18,7 +18,6 @@ public class BydPlatformDbContext : IdentityDbContext<ApplicationUser>
         IDomainEventService domainEventService,
         ICurrentUserService currentUserService) : base(options)
     {
-        Log.Information($"注入服务:{typeof(BydPlatformDbContext).FullName}");
         _domainEventService = domainEventService;
         _currentUserService = currentUserService;
     }
@@ -33,11 +32,11 @@ public class BydPlatformDbContext : IdentityDbContext<ApplicationUser>
             switch (entry.State)
             {
                 case EntityState.Added:
-                    entry.Entity.CreatedBy = _currentUserService.UserName;
+                    entry.Entity.CreatedBy = string.IsNullOrEmpty(_currentUserService.UserName)?"Anonymous":_currentUserService.UserName;
                     entry.Entity.Created = DateTime.UtcNow;
                     break;
                 case EntityState.Modified:
-                    entry.Entity.LastModifiedBy = _currentUserService.UserName;
+                    entry.Entity.LastModifiedBy = string.IsNullOrEmpty(_currentUserService.UserName)?"Anonymous":_currentUserService.UserName;
                     entry.Entity.LastModified = DateTime.UtcNow;
                     break;
             }
@@ -58,8 +57,8 @@ public class BydPlatformDbContext : IdentityDbContext<ApplicationUser>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.Entity<User>().ToTable("user");
-        modelBuilder.Entity<RegisterFactory>().ToTable("register_factory");
+        modelBuilder.Entity<User>();
+        modelBuilder.Entity<RegisterFactory>();
         modelBuilder.Entity<BusinessDivision>();
         
     }

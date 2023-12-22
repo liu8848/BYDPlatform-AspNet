@@ -1,6 +1,7 @@
 using System.Text;
 using Autofac;
 using BYDPlatform.Application.Common.Interfaces;
+using BYDPlatform.Infrastructure.Extensions;
 using BYDPlatform.Infrastructure.Identity;
 using BydPlatform.Infrastructure.Persistence;
 using BYDPlatform.Infrastructure.Services;
@@ -70,6 +71,9 @@ public static class DependencyInjection
             options.AddPolicy("OnlyAdmin", policy => policy.RequireRole("Administrator")));
 
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+        
+        
+        services.BatchRegisterService();
         return services;
     }
 
@@ -93,4 +97,6 @@ public static class DependencyInjection
             .AsSelf()
             .InstancePerLifetimeScope();
     }
+
+    
 }

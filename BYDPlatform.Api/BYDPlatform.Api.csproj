@@ -5,6 +5,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <InvariantGlobalization>true</InvariantGlobalization>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     </PropertyGroup>
 
     <ItemGroup>
@@ -19,6 +20,10 @@
     <ItemGroup>
         <ProjectReference Include="..\BYDPlatform.Application\BYDPlatform.Application.csproj"/>
         <ProjectReference Include="..\BYDPlatform.Infrastructure\BYDPlatform.Infrastructure.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="src\" />
     </ItemGroup>
 
 </Project>

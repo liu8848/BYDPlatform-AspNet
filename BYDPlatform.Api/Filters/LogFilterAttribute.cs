@@ -27,7 +27,12 @@ public class LogFilterAttribute:IActionFilter
         var action = context.RouteData.Values["action"];
         var controller = context.RouteData.Values["controller"];
 
+        if (context.Exception is not null)
+        {
+            context.Result = new BadRequestObjectResult(context.Exception);
+        }
         var result = (ObjectResult)context.Result!;
         _logger.LogInformation($"Controller:{controller}, action: {action}, Executing response: {JsonSerializer.Serialize(result.Value)}");
     }
+    
 }

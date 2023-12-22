@@ -36,8 +36,9 @@ public class Program
         builder.Services.AddControllers();
 
         builder.Services.AddScoped(typeof(IRepository<>), typeof(RepositoryBase<>));
-
+        
         builder.Services.AddSingleton<ICurrentUserService, CurrentUserService>();
+        
         
         var app = builder.Build();
         
