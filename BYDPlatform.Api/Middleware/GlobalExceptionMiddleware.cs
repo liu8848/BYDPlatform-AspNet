@@ -1,5 +1,7 @@
 using System.Net;
 using BYDPlatform.Api.Models;
+using BYDPlatform.Application.Common.Extensions;
+using FluentValidation;
 
 namespace BYDPlatform.Api.Middleware;
 
@@ -17,6 +19,11 @@ public class GlobalExceptionMiddleware
         try
         {
             await _next(context);
+        }
+        catch (ValidationException e)
+        {
+            var failures = e.Errors;
+            await HandleExceptionAsync(context, new Exception(failures.GetValidationErrorMessage()));
         }
         catch (Exception e)
         {

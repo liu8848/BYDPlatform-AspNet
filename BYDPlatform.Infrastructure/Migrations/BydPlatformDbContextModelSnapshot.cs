@@ -58,6 +58,70 @@ namespace BYDPlatform.Infrastructure.Migrations
                     b.ToTable("business_division");
                 });
 
+            modelBuilder.Entity("BYDPlatform.Domain.Entities.OperationLog", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id")
+                        .HasComment("操作日志主键Id");
+
+                    b.Property<string>("Action")
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("action")
+                        .HasComment("执行方法");
+
+                    b.Property<string>("Controller")
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("controller")
+                        .HasComment("控制器名称");
+
+                    b.Property<string>("ExceptionMsg")
+                        .HasColumnType("varchar(200)")
+                        .HasColumnName("exception_msg")
+                        .HasComment("抛出错误信息");
+
+                    b.Property<string>("ExceptionType")
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("exception_type")
+                        .HasComment("抛出错误类型");
+
+                    b.Property<bool>("ExecuteStatus")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("execute_status")
+                        .HasComment("方法执行状态（0:失败,1:成功");
+
+                    b.Property<DateTime>("ExecutedTime")
+                        .HasColumnType("datetime")
+                        .HasColumnName("executed_time")
+                        .HasComment("执行时间");
+
+                    b.Property<string>("IpAddress")
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("ip_address")
+                        .HasComment("发送请求ip");
+
+                    b.Property<string>("RequestParams")
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("request_params")
+                        .HasComment("请求参数");
+
+                    b.Property<string>("ResponseBody")
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("response_body")
+                        .HasComment("响应体信息");
+
+                    b.Property<string>("User")
+                        .IsRequired()
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("user")
+                        .HasComment("发送请求用户名");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("operation_log");
+                });
+
             modelBuilder.Entity("BYDPlatform.Domain.Entities.RegisterFactory", b =>
                 {
                     b.Property<int>("Id")

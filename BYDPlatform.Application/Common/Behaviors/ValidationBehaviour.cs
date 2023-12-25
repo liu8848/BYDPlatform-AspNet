@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using BYDPlatform.Application.Common.Extensions;
 using FluentValidation;
 using FluentValidation.Results;
 using MediatR;

@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BYDPlatform.Api.Controllers;
 
 [ApiController]
+[Authorize(Policy = "OnlyAdmin")]
 [Route("BusinessDivision")]
 public class BusinessDivisionController:ControllerBase
 {
@@ -27,6 +28,7 @@ public class BusinessDivisionController:ControllerBase
     }
 
     [HttpGet("{id:int}")]
+    [ServiceFilter(typeof(LogFilterAttribute))]
     public async Task<ApiResponse<BusinessDivision>> getOne(int id)
     {
         var businessDivision = await _businessDivisionService.GetById(id);
@@ -50,20 +52,17 @@ public class BusinessDivisionController:ControllerBase
     
     [HttpPost]
     [Route("create")]
-    [Authorize(Policy = "OnlyAdmin")]
+    // [Authorize(Policy = "OnlyAdmin")]
     [ServiceFilter(typeof(LogFilterAttribute))]
     public async Task<ApiResponse<BusinessDivision>> CreateBusinessDivision([FromBody] BusinessDivisionCreateOrUpdateDto createOrUpdateDto)
     {
-        if (!(await _validator.ValidateAsync(createOrUpdateDto)).IsValid)
-        {
-            await _validator.ValidateAndThrowAsync(createOrUpdateDto);
-        }
+        await _validator.ValidateAndThrowAsync(createOrUpdateDto);
         var bu = await _businessDivisionService.Create(createOrUpdateDto);
         return ApiResponse<BusinessDivision>.Success(bu);
     }
 
     [HttpPut("{id:int}")]
-    [Authorize(Policy = "OnlyAdmin")]
+    // [Authorize(Policy = "OnlyAdmin")]
     [ServiceFilter(typeof(LogFilterAttribute))]
     public async Task<ApiResponse<BusinessDivision>> Update(int id, [FromBody] BusinessDivisionCreateOrUpdateDto update)
     {

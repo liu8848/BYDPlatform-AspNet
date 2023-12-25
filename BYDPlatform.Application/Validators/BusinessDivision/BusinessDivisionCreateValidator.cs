@@ -2,6 +2,7 @@ using BYDPlatform.Application.Common.Interfaces;
 using BYDPlatform.Domain.DTOs.BusinessDivision;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 namespace BYDPlatform.Application.Validators.BusinessDivision;
 
@@ -11,6 +12,7 @@ public class BusinessDivisionCreateValidator:AbstractValidator<BusinessDivisionC
 
     public BusinessDivisionCreateValidator(IRepository<Domain.Entities.BusinessDivision> repository)
     {
+        Log.Information($"=================注入校验器:{typeof(BusinessDivisionCreateValidator).FullName}");
         _repository = repository;
         
         RuleFor(bu=>bu.BuName)
