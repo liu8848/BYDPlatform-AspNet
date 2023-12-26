@@ -53,7 +53,7 @@ public class LogFilterAttribute:IActionFilter
         //执行时间
         operationLog.ExecutedTime=DateTime.UtcNow;
         //
-        operationLog.RequestParams = context.HttpContext.Request.ToString();
+        operationLog.RequestParams = context.HttpContext.Request.Path;
 
         if (context.Exception is not null)
         {
