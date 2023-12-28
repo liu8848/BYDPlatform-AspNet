@@ -92,6 +92,7 @@ public class BusinessDivisionService:IBusinessDivisionService
         await _repository.DeleteAsync(bu);
         return Unit.Value;
     }
+    
 
     public async Task<PaginatedList<Domain.Entities.BusinessDivision>> GetPageQueryList(IBaseQueryDto query)
     {
@@ -121,5 +122,10 @@ public class BusinessDivisionService:IBusinessDivisionService
             .OrderBy(bu=>bu.Id)
             .PaginatedListAsync(queryDto.PageNumber,queryDto.PageSize);
         return pageResult.ShapeData(_dataShaper, queryDto.Fields);
+    }
+    
+    public async Task<List<Domain.Entities.BusinessDivision>> BatchInsert(List<Domain.Entities.BusinessDivision> insertList)
+    {
+        throw new NotImplementedException();
     }
 }

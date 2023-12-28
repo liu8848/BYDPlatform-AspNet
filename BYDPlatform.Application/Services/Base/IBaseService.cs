@@ -18,4 +18,6 @@ public interface IBaseService<T> where T:class
     Task<T> Update(IBaseCreateOrUpdateDto update);
 
     Task<object> Delete(object id);
+
+    Task<List<T>> BatchInsert(List<T> insertList);
 }

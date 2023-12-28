@@ -12,6 +12,7 @@
 
     <ItemGroup>
       <Compile Remove="Common\Interfaces\IRepositories\**" />
+      <Compile Remove="Common\Tools\dc.cs" />
     </ItemGroup>
 
     <ItemGroup>
@@ -28,11 +29,11 @@
       <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0" />
       <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
       <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.2" />
+      <PackageReference Include="NPOI" Version="2.6.2" />
     </ItemGroup>
 
     <ItemGroup>
       <Folder Include="BusinessDivision\EventHandlers\" />
-      <Folder Include="Common\Tools\" />
     </ItemGroup>
 
     <ItemGroup>

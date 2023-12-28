@@ -23,6 +23,12 @@ public class RepositoryBase<T>:IRepository<T> where T:class
         return entity;
     }
 
+    public async Task AddRange(List<T> entities, CancellationToken cancellationToken = default)
+    {
+        _dbContext.Set<T>().AddRange(entities);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task UpdateAsync(T entity, CancellationToken cancellationToken = default)
     {
         _dbContext.Entry(entity).State = EntityState.Modified;

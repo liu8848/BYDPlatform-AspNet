@@ -1,4 +1,5 @@
 using System.Dynamic;
+using AutoMapper;
 using BYDPlatform.Application.Common.Attributes;
 using BYDPlatform.Application.Common.Exceptions;
 using BYDPlatform.Application.Common.Extensions;
@@ -20,12 +21,18 @@ public class FactoryService:IFactoryService
 {
     private readonly IRepository<RegisterFactory> _repository;
     private readonly IDataShaper<RegisterFactory> _dataShaper;
+    private readonly IMapper _mapper;
 
 
-    public FactoryService(IRepository<RegisterFactory> repository,IDataShaper<RegisterFactory>dataShaper)
+    public FactoryService(
+        IRepository<RegisterFactory> repository,
+        IDataShaper<RegisterFactory>dataShaper,
+        IMapper mapper
+        )
     {
         _repository = repository;
         _dataShaper = dataShaper;
+        _mapper = mapper;
     }
 
     public async Task<RegisterFactory> GetById(int id)
@@ -119,4 +126,11 @@ public class FactoryService:IFactoryService
         await _repository.DeleteAsync(entity);
         return Unit.Value;
     }
+
+    public async Task<List<RegisterFactory>> BatchInsert(List<RegisterFactory> insertList)
+    {
+        await _repository.AddRange(insertList);
+        return insertList;
+    }
+    
 }

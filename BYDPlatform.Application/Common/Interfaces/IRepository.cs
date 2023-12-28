@@ -6,6 +6,7 @@ namespace BYDPlatform.Application.Common.Interfaces;
 public interface IRepository<T> where T:class
 {
     Task<T> AddAsync(T entity, CancellationToken cancellationToken = default);
+    Task AddRange(List<T> entities, CancellationToken cancellationToken = default);
 
     Task UpdateAsync(T entity, CancellationToken cancellationToken = default);
 

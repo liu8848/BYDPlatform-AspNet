@@ -1,8 +1,12 @@
 using System.Dynamic;
+using AutoMapper;
 using BYDPlatform.Api.Filters;
 using BYDPlatform.Api.Models;
+using BYDPlatform.Application.Common.Extensions;
 using BYDPlatform.Application.Common.Model;
+using BYDPlatform.Application.Common.Tools;
 using BYDPlatform.Application.Services.Factory;
+using BYDPlatform.Domain.DTOs.Base;
 using BYDPlatform.Domain.DTOs.RegisterFactory;
 using BYDPlatform.Domain.Entities;
 using FluentValidation;
@@ -18,11 +22,15 @@ public class FactoryController : ControllerBase
 {
     private readonly IFactoryService _factoryService;
     private readonly IValidator<RegisterFactoryCreateOrUpdateDto> _validator;
+    private readonly IMapper _mapper;
 
-    public FactoryController(IFactoryService factoryService,IValidator<RegisterFactoryCreateOrUpdateDto> validator)
+    public FactoryController(IFactoryService factoryService,
+        IValidator<RegisterFactoryCreateOrUpdateDto> validator,
+        IMapper mapper)
     {
         _factoryService = factoryService;
         _validator = validator;
+        _mapper = mapper;
     }
 
     [HttpPost]
@@ -95,8 +103,16 @@ public class FactoryController : ControllerBase
     }
 
     [HttpPost("BatchInsert")]
-    public async Task<ApiResponse<List<RegisterFactory>>> BatchInsert([FromBody] List<RegisterFactory> insertList)
+    public async Task<ApiResponse<string>> BatchInsert([FromForm(Name = "file")] IFormFile file)
     {
-        return null;
+        var createList = ExcelHelper.ImportExcelToEntityList<RegisterFactoryCreateOrUpdateDto>(file.OpenReadStream());
+        var validateResultDic =await _validator.ValidateList(createList);
+        var insertList = (List<RegisterFactoryCreateOrUpdateDto>)validateResultDic["success"];
+
+        var factories = _mapper.Map<List<RegisterFactory>>(insertList);
+
+        await _factoryService.BatchInsert(factories);
+        return ApiResponse<string>.Success($"共{createList.Count}条数据，成功导入{insertList.Count}条，" +
+                                           $"{createList.Count-insertList.Count}条校验错误，请检查");
     }
 }
