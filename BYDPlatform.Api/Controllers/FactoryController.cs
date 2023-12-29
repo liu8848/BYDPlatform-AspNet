@@ -1,4 +1,6 @@
 using System.Dynamic;
+using System.Net.Http.Headers;
+using System.Text;
 using AutoMapper;
 using BYDPlatform.Api.Filters;
 using BYDPlatform.Api.Models;
@@ -12,6 +14,7 @@ using BYDPlatform.Domain.Entities;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MediaTypeHeaderValue = Microsoft.Net.Http.Headers.MediaTypeHeaderValue;
 
 namespace BYDPlatform.Api.Controllers;
 
@@ -103,16 +106,30 @@ public class FactoryController : ControllerBase
     }
 
     [HttpPost("BatchInsert")]
-    public async Task<ApiResponse<string>> BatchInsert([FromForm(Name = "file")] IFormFile file)
+    public async Task<IActionResult> BatchInsert([FromForm(Name = "file")] IFormFile file)
     {
         var createList = ExcelHelper.ImportExcelToEntityList<RegisterFactoryCreateOrUpdateDto>(file.OpenReadStream());
         var validateResultDic =await _validator.ValidateList(createList);
         var insertList = (List<RegisterFactoryCreateOrUpdateDto>)validateResultDic["success"];
 
         var factories = _mapper.Map<List<RegisterFactory>>(insertList);
+        if(factories.Count>0)
+            await _factoryService.BatchInsert(factories);
 
-        await _factoryService.BatchInsert(factories);
-        return ApiResponse<string>.Success($"共{createList.Count}条数据，成功导入{insertList.Count}条，" +
-                                           $"{createList.Count-insertList.Count}条校验错误，请检查");
+        var errorList = (List<RegisterFactoryCreateOrUpdateDto>)validateResultDic["error"];
+        var dataTable = ExcelHelper.ListToDataTable(errorList);
+        // var memoryStream = ExcelHelper.ExportDataTable("校验结果",dataTable);
+
+        // var fs = ExcelHelper.ExportDataTable(dataTable);
+        
+        if(errorList.Count==0)
+            return Ok($"成功导入{factories.Count}条数据！");
+        using var fs = ExcelHelper.ExportDataTable(dataTable);
+        
+        return new FileStreamResult(fs, "application/vnd.ms-excel;charset=utf-8")
+        {
+            FileDownloadName = "错误列表.xlsx",
+                
+        };
     }
 }

@@ -1,4 +1,5 @@
 using System.Data;
+using System.Globalization;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -6,7 +7,6 @@ using BYDPlatform.Domain.Attributes;
 using BYDPlatform.Domain.Constant;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.Formula.Eval;
-using NPOI.SS.Formula.Functions;
 using NPOI.SS.UserModel;
 using NPOI.SS.Util;
 using NPOI.XSSF.UserModel;
@@ -15,10 +15,20 @@ namespace BYDPlatform.Application.Common.Tools;
 
 public static class ExcelHelper
 {
+    private const int MAX_COL_WIDTH = 100 * 256;
 
 
+    /// <summary>
+    /// 将DataTable导出为Excel（内存流）
+    /// </summary>
+    /// <param name="dt">数据源DataTable</param>
+    /// <param name="fs">文件流</param>
+    /// <param name="sheetName">表单名称</param>
+    /// <param name="headerText">表头名称</param>
+    /// <param name="headerIndex">表头索引，默认-1为不需要</param>
+    /// <param name="dateFormat">日期时间格式化字符串</param>
     public static MemoryStream ExportDataTable(string fileName, DataTable dt,
-        string headerRowText="",string sheetName="Sheet1")
+        string sheetName="Sheet1",int headerIndex=-1,string headerText="",string dateFormat="yyyy-mm-dd hh:mm:ss")
     {
         //创建工作簿和sheet
         IWorkbook workbook = new HSSFWorkbook();
@@ -33,153 +43,34 @@ public static class ExcelHelper
         ISheet sheet = null;
         ICellStyle dateStyle = workbook.CreateCellStyle();
         IDataFormat format = workbook.CreateDataFormat();
-        dateStyle.DataFormat = format.GetFormat("yyyy-mm-dd");
-        int[] arrColWidth = new int[dt.Columns.Count];
-        foreach (DataColumn item in dt.Columns)
-        {
-            arrColWidth[item.Ordinal] = Encoding.GetEncoding(936).GetBytes(Convert.ToString(item.ColumnName)).Length;
-        }
-        for (int i = 0; i < dt.Rows.Count; i++)
-        {
-            for (int j = 0; j < dt.Columns.Count; j++)
-            {
-                int intTemp = Encoding.GetEncoding(936).GetBytes(Convert.ToString(dt.Rows[i][j]) ?? string.Empty).Length;
-                if (intTemp > arrColWidth[j])
-                {
-                    arrColWidth[j] = intTemp;
-                }
-            }
-        }
-
-        int rowIndex = 0;
-        foreach (DataRow row in dt.Rows)
-        {
-            #region 新建表，填充表头，填充列头，样式
-            if (rowIndex == 0)
-            {
-                if (workbook.GetSheetIndex(sheetName) >= 0)
-                {
-                    workbook.RemoveSheetAt(workbook.GetSheetIndex(sheetName));
-                }
-
-                sheet = workbook.CreateSheet(sheetName);
-
-                #region 表头及样式
-                {
-                    //合并第一行表头
-                    sheet.AddMergedRegion(new CellRangeAddress(0, 0, 0, dt.Columns.Count - 1));
-                    var headerRow = sheet.CreateRow(0);
-                    headerRow.HeightInPoints = 25;
-                    //设置表头内容
-                    headerRow.CreateCell(0).SetCellValue(headerRowText);
-                    var headerStyle = workbook.CreateCellStyle();
-                    headerStyle.Alignment = HorizontalAlignment.Center;
-                    IFont font = workbook.CreateFont();
-                    font.FontHeightInPoints = 20;
-                    font.Boldweight = 700;
-                    headerStyle.SetFont(font);
-                    headerRow.GetCell(0).CellStyle = headerStyle;
-                    rowIndex = 1;
-                }
-                #endregion
-
-                #region 列头及样式
-
-                if (rowIndex == 1)
-                {
-                    IRow headerRow = sheet.CreateRow(1);//第二行设置列名
-                    ICellStyle headStyle = workbook.CreateCellStyle();
-                    headStyle.Alignment = HorizontalAlignment.Center;
-                    IFont font = workbook.CreateFont();
-                    font.FontHeightInPoints = 10;
-                    font.Boldweight = 700;
-                    headStyle.SetFont(font);
-                    //写入列标题
-                    foreach (DataColumn column in dt.Columns)
-                    {
-                        headerRow.CreateCell(column.Ordinal).SetCellValue(column.ColumnName);
-                        headerRow.GetCell(column.Ordinal).CellStyle = headStyle;
-                        //设置列宽
-                        sheet.SetColumnWidth(column.Ordinal, (arrColWidth[column.Ordinal] + 1) * 256 * 2);
-                    }
-                    rowIndex = 2;
-                }
-
-                #endregion
-            }
-            #endregion
-
-            #region 填充内容
-
-            IRow dataRow = sheet.CreateRow(rowIndex);
-
-            foreach (DataColumn column in dt.Columns)
-            {
-                var newCell = dataRow.CreateCell(column.Ordinal);
-                var drValue = row[column].ToString();
-                                    switch (column.DataType.ToString())
-                    {
-                        case "System.String": //字符串类型
-                            double result;
-                            if (IsNumeric(drValue, out result))
-                            {
-                                //数字字符串
-                                double.TryParse(drValue, out result);
-                                newCell.SetCellValue(result);
-                                break;
-                            }
-                            else
-                            {
-                                newCell.SetCellValue(drValue);
-                                break;
-                            }
-                        case "System.DateTime": //日期类型
-                            DateTime dateV;
-                            DateTime.TryParse(drValue, out dateV);
-                            newCell.SetCellValue(dateV);
-                            newCell.CellStyle = dateStyle; //格式化显示
-                            break;
-                        case "System.Boolean": //布尔型
-                            bool boolV = false;
-                            bool.TryParse(drValue, out boolV);
-                            newCell.SetCellValue(boolV);
-                            break;
-                        case "System.Int16": //整型
-                        case "System.Int32":
-                        case "System.Int64":
-                        case "System.Byte":
-                            int intV = 0;
-                            int.TryParse(drValue, out intV);
-                            newCell.SetCellValue(intV);
-                            break;
-                        case "System.Decimal": //浮点型
-                        case "System.Double":
-                            double doubV = 0;
-                            double.TryParse(drValue, out doubV);
-                            newCell.SetCellValue(doubV);
-                            break;
-                        case "System.DBNull": //空值处理
-                            newCell.SetCellValue("");
-                            break;
-                        default:
-                            newCell.SetCellValue(drValue.ToString());
-                            break;
-                    }
-            }
-            #endregion
-        }
-        using (MemoryStream ms = new MemoryStream())
-        {
-            workbook.Write(ms, true);
-            ms.Flush();
-            ms.Position = 0;
-            return ms;
-        }
+        dateStyle.DataFormat = format.GetFormat(dateFormat);
+        int[] arrColWidth = GetContentLength(dt);
+        
+        sheet = workbook.CreateSheet(sheetName);
+        
+        //创建表头
+        int rowIndex = CreateHeader(sheet,workbook,arrColWidth,dt.Columns,headerIndex,headerText);
+        
+        //填充内容
+        CreateCellContent(sheet,workbook,dt,rowIndex,dateFormat);
+        MemoryStream ms = new MemoryStream();
+        workbook.Write(ms, true);
+        ms.Flush();
+        ms.Position = 0;
+        return ms;
     }
-
-
-    public static void ExportDataTable(DataTable dt, FileStream fs,
-        string sheetName, string headerText)
+    
+    /// <summary>
+    /// 将DataTable导出为Excel（通过文件流）
+    /// </summary>
+    /// <param name="dt">数据源DataTable</param>
+    /// <param name="fs">文件流</param>
+    /// <param name="sheetName">表单名称</param>
+    /// <param name="headerText">表头名称</param>
+    /// <param name="headerIndex">表头索引，默认-1为不需要</param>
+    /// <param name="dateFormat">日期时间格式化字符串</param>
+    public static FileStream ExportDataTable(DataTable dt,
+        string sheetName="Sheet1", string headerText="",int headerIndex=-1,string dateFormat="yyyy-mm-dd hh:mm:ss")
     {
         IWorkbook workbook = new XSSFWorkbook();
         ISheet sheet = null;
@@ -187,90 +78,100 @@ public static class ExcelHelper
         IDataFormat format = workbook.CreateDataFormat();
         dateStyle.DataFormat = format.GetFormat("yyyy-mm-dd");
         //取得列宽
-        int[] arrColWidth = new int[dt.Columns.Count];
-        foreach (DataColumn item in dt.Columns)
+        int[] arrColWidth = GetContentLength(dt);
+        
+        if (workbook.GetSheetIndex(sheetName) >= 0)
         {
-            arrColWidth[item.Ordinal] = Encoding.GetEncoding(0).GetBytes(Convert.ToString(item.ColumnName)).Length;
+            workbook.RemoveSheetAt(workbook.GetSheetIndex(sheetName));
         }
 
-        for (int i = 0; i < dt.Rows.Count; i++)
+        sheet = workbook.CreateSheet(sheetName);
+        
+        //创建表头
+        int rowIndex = CreateHeader(sheet,workbook,arrColWidth,dt.Columns,headerIndex,headerText);
+        
+        //填充内容
+        CreateCellContent(sheet,workbook,dt,rowIndex,dateFormat);
+        string fileName = $"temp{DateTime.Now.ToString("yyyyMMddhhmmss")}.xlsx";
+        var fs = new FileStream($"./{fileName}",FileMode.OpenOrCreate,FileAccess.ReadWrite);
+        workbook.Write(fs);
+
+        return fs;
+    }
+
+    
+    /// <summary>
+    /// 根据DataTable的Column集合创建表头
+    /// </summary>
+    /// <param name="sheet">创建表头的表单</param>
+    /// <param name="workbook">表单所属工作簿</param>
+    /// <param name="cellStyle">单元格样式</param>
+    /// <param name="arrColWidth">列宽集合</param>
+    /// <param name="columns">列集合</param>
+    /// <param name="headerIndex">表头索引,不需要表头时设置为-1</param>
+    /// <param name="headerText">表头标题内容</param>
+    /// <returns name="rowIndex">返回创建表头后的下一行</returns>
+    public static int CreateHeader(ISheet sheet, IWorkbook workbook,int[] arrColWidth,
+        DataColumnCollection columns, int headerIndex = -1,string headerText="")
+    {
+        int rowIndex = headerIndex;
+        //需要表头是合并第一行作为表头
+        if (headerIndex >= 0)
         {
-            for (int j = 0; j < dt.Columns.Count; j++)
-            {
-                int intTemp = Encoding.GetEncoding(0).GetBytes(Convert.ToString(dt.Rows[i][j]) ?? string.Empty)
-                    .Length;
-                if (intTemp > arrColWidth[j])
-                {
-                    arrColWidth[j] = intTemp;
-                }
-            }
+            sheet.AddMergedRegion(new CellRangeAddress(0, 0, 0, columns.Count - 1));
+            var headerRow = sheet.CreateRow(0);
+            headerRow.HeightInPoints = 25;
+            //设置表头内容
+            headerRow.CreateCell(0).SetCellValue(headerText);
+            var headerStyle = workbook.CreateCellStyle();
+            headerStyle.Alignment = HorizontalAlignment.Center;
+            //设置字体
+            var font = workbook.CreateFont();
+            font.FontHeightInPoints = 20;
+            font.IsBold = true;
+            headerStyle.SetFont(font);
+            headerRow.GetCell(0).CellStyle = headerStyle;
         }
 
-        int rowIndex = 0;
+        rowIndex++;
+        
+        //创建列头
+        IRow columnRow = sheet.CreateRow(rowIndex);
+        var columnStyle = workbook.CreateCellStyle();
+        columnStyle.Alignment = HorizontalAlignment.Center;
+        var font1 = workbook.CreateFont();
+        font1.FontHeightInPoints = 10;
+        font1.IsBold = true;
+        //写入列标题
+        foreach (DataColumn column in columns)   
+        {
+            columnRow.CreateCell(column.Ordinal).SetCellValue(column.ColumnName);
+            columnRow.GetCell(column.Ordinal).CellStyle = columnStyle;
+            // sheet.SetColumnWidth(column.Ordinal,((arrColWidth[column.Ordinal]+1)*256*2)>256?256:(arrColWidth[column.Ordinal]+1)*256*2);
+
+            int tmp = (arrColWidth[column.Ordinal] + 1) * 256 * 2;
+            int width = tmp > MAX_COL_WIDTH ? MAX_COL_WIDTH : tmp;
+            sheet.SetColumnWidth(column.Ordinal, width);
+        }
+
+        rowIndex++;
+
+        return rowIndex;
+    }
+
+    /// <summary>
+    /// 填充Excel内容
+    /// </summary>
+    /// <param name="sheet">填充表单</param>
+    /// <param name="workbook">填充工作簿</param>
+    /// <param name="dt">DataTable</param>
+    /// <param name="rowIndex">填充行号</param>
+    /// <param name="dateFormat">日期时间格式化字符串</param>
+    public static void CreateCellContent(ISheet sheet, IWorkbook workbook, DataTable dt, 
+        int rowIndex,string dateFormat="yyyy-mm-dd hh:mm:ss")
+    {
         foreach (DataRow row in dt.Rows)
         {
-            #region 新建表，填充表头，填充列头，样式
-
-            if (rowIndex == 0)
-            {
-                if (workbook.GetSheetIndex(sheetName) >= 0)
-                {
-                    workbook.RemoveSheetAt(workbook.GetSheetIndex(sheetName));
-                }
-
-                sheet = workbook.CreateSheet(sheetName);
-
-                #region 表头及样式
-
-                {
-                    //合并第一行表头
-                    sheet.AddMergedRegion(new CellRangeAddress(0, 0, 0, dt.Columns.Count - 1));
-                    var headerRow = sheet.CreateRow(0);
-                    headerRow.HeightInPoints = 25;
-                    //设置表头内容
-                    headerRow.CreateCell(0).SetCellValue(headerText);
-                    var headerStyle = workbook.CreateCellStyle();
-                    headerStyle.Alignment = HorizontalAlignment.Center;
-                    IFont font = workbook.CreateFont();
-                    font.FontHeightInPoints = 20;
-                    font.Boldweight = 700;
-                    headerStyle.SetFont(font);
-                    headerRow.GetCell(0).CellStyle = headerStyle;
-                    rowIndex = 1;
-                }
-
-                #endregion
-
-                #region 列头及样式
-
-                if (rowIndex == 1)
-                {
-                    IRow headerRow = sheet.CreateRow(1); //第二行设置列名
-                    ICellStyle headStyle = workbook.CreateCellStyle();
-                    headStyle.Alignment = HorizontalAlignment.Center;
-                    IFont font = workbook.CreateFont();
-                    font.FontHeightInPoints = 10;
-                    font.Boldweight = 700;
-                    headStyle.SetFont(font);
-                    //写入列标题
-                    foreach (DataColumn column in dt.Columns)
-                    {
-                        headerRow.CreateCell(column.Ordinal).SetCellValue(column.ColumnName);
-                        headerRow.GetCell(column.Ordinal).CellStyle = headStyle;
-                        //设置列宽
-                        sheet.SetColumnWidth(column.Ordinal, (arrColWidth[column.Ordinal] + 1) * 256 * 2);
-                    }
-
-                    rowIndex = 2;
-                }
-
-                #endregion
-            }
-
-            #endregion
-
-            #region 填充内容
-
             IRow dataRow = sheet.CreateRow(rowIndex);
 
             foreach (DataColumn column in dt.Columns)
@@ -279,11 +180,10 @@ public static class ExcelHelper
                 var drValue = row[column].ToString();
                 switch (column.DataType.ToString())
                 {
-                    case "System.String": //字符串类型
+                    case PropertyTypeConstant.STRING:
                         double result;
                         if (IsNumeric(drValue, out result))
                         {
-                            //数字字符串
                             double.TryParse(drValue, out result);
                             newCell.SetCellValue(result);
                             break;
@@ -293,32 +193,32 @@ public static class ExcelHelper
                             newCell.SetCellValue(drValue);
                             break;
                         }
-                    case "System.DateTime": //日期类型
+                    case PropertyTypeConstant.DATETIME:
                         DateTime dateV;
                         DateTime.TryParse(drValue, out dateV);
                         newCell.SetCellValue(dateV);
-                        newCell.CellStyle = dateStyle; //格式化显示
+                        newCell.CellStyle.DataFormat = workbook.CreateDataFormat().GetFormat(dateFormat);
                         break;
-                    case "System.Boolean": //布尔型
-                        bool boolV = false;
+                    case PropertyTypeConstant.BOOLEAN:
+                        bool boolV=false;
                         bool.TryParse(drValue, out boolV);
                         newCell.SetCellValue(boolV);
                         break;
-                    case "System.Int16": //整型
-                    case "System.Int32":
-                    case "System.Int64":
-                    case "System.Byte":
+                    case PropertyTypeConstant.INT16:
+                    case PropertyTypeConstant.INT32:
+                    case PropertyTypeConstant.INT64:
+                    case PropertyTypeConstant.BYTE:
                         int intV = 0;
                         int.TryParse(drValue, out intV);
                         newCell.SetCellValue(intV);
                         break;
-                    case "System.Decimal": //浮点型
-                    case "System.Double":
+                    case PropertyTypeConstant.DECIMAL:
+                    case PropertyTypeConstant.DOUBLE:
                         double doubV = 0;
                         double.TryParse(drValue, out doubV);
                         newCell.SetCellValue(doubV);
                         break;
-                    case "System.DBNull": //空值处理
+                    case PropertyTypeConstant.DBNULL:
                         newCell.SetCellValue("");
                         break;
                     default:
@@ -326,15 +226,11 @@ public static class ExcelHelper
                         break;
                 }
             }
-            #endregion
 
             rowIndex++;
         }
-        workbook.Write(fs,true);
-        fs.Close();
     }
-
-
+    
 
     /// <summary>
     /// 将实体列表转换成DataTable
@@ -348,6 +244,7 @@ public static class ExcelHelper
             .Where(p=>p.GetCustomAttributes(typeof(ExcelAttribute),false).Length>0)
             .ToList();
         var table = new DataTable();
+        //按照注解ColumIndex属性排序
         propertyInfos.Sort((p1, p2) =>
         {
             var index1 = p1.GetCustomAttribute<ExcelAttribute>().ColumnIndex;
@@ -697,6 +594,33 @@ public static class ExcelHelper
         }
         else
             return false;
+    }
+
+    /// <summary>
+    /// 返回每一列列宽集合
+    /// </summary>
+    /// <param name="dataTable">数据源</param>
+    /// <returns></returns>
+    private static int[] GetContentLength(DataTable dataTable)
+    {
+        int[] arrColWidth = new int[dataTable.Columns.Count];
+        foreach (DataColumn item in dataTable.Columns)
+        {
+            var length = Encoding.UTF8.GetBytes(item.ColumnName).Length;
+            arrColWidth[item.Ordinal] = length > 255 ? 255 : length;
+        }
+
+        foreach (DataRow row in dataTable.Rows)
+        {
+            for (int j = 0; j < dataTable.Columns.Count; j++)
+            {
+                var tmp = Encoding.UTF8.GetBytes(row[j].ToString() ?? string.Empty).Length;
+                int length = tmp > 255 ? 255 : tmp;
+                arrColWidth[j]=int.Max(arrColWidth[j],length);
+            }
+        }
+
+        return arrColWidth;
     }
 }
 

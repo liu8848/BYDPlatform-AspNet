@@ -7,6 +7,7 @@ public static class PropertyTypeConstant
     public const string INT16 = "System.Int16";
     public const string INT32 = "System.Int32";
     public const string INT64 = "System.Int64";
+    public const string BYTE = "System.Byte";
 
     public const string DATETIME  = "System.DateTime";
 
@@ -14,5 +15,7 @@ public static class PropertyTypeConstant
 
     public const string DECIMAL = "System.Decimal";
     public const string DOUBLE = "System.Double";
-    
+
+    public const string DBNULL = "System.DBNull";
+
 }
