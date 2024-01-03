@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace BYDPlatform.Application.Common.Implements;
 
-public class CurrentUserService:ICurrentUserService
+public class CurrentUserService : ICurrentUserService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
 

@@ -1,5 +1,4 @@
 using System.Data;
-using System.Globalization;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -19,7 +18,7 @@ public static class ExcelHelper
 
 
     /// <summary>
-    /// 将DataTable导出为Excel（内存流）
+    ///     将DataTable导出为Excel（内存流）
     /// </summary>
     /// <param name="dt">数据源DataTable</param>
     /// <param name="fs">文件流</param>
@@ -28,40 +27,38 @@ public static class ExcelHelper
     /// <param name="headerIndex">表头索引，默认-1为不需要</param>
     /// <param name="dateFormat">日期时间格式化字符串</param>
     public static MemoryStream ExportDataTable(string fileName, DataTable dt,
-        string sheetName="Sheet1",int headerIndex=-1,string headerText="",string dateFormat="yyyy-mm-dd hh:mm:ss")
+        string sheetName = "Sheet1", int headerIndex = -1, string headerText = "",
+        string dateFormat = "yyyy-mm-dd hh:mm:ss")
     {
         //创建工作簿和sheet
         IWorkbook workbook = new HSSFWorkbook();
         using (Stream writeFile = new FileStream(fileName, FileMode.OpenOrCreate, FileAccess.Read))
         {
-            if (writeFile.Length > 0 && string.IsNullOrEmpty(sheetName))
-            {
-                workbook=WorkbookFactory.Create(writeFile);
-            }
+            if (writeFile.Length > 0 && string.IsNullOrEmpty(sheetName)) workbook = WorkbookFactory.Create(writeFile);
         }
 
         ISheet sheet = null;
-        ICellStyle dateStyle = workbook.CreateCellStyle();
-        IDataFormat format = workbook.CreateDataFormat();
+        var dateStyle = workbook.CreateCellStyle();
+        var format = workbook.CreateDataFormat();
         dateStyle.DataFormat = format.GetFormat(dateFormat);
-        int[] arrColWidth = GetContentLength(dt);
-        
+        var arrColWidth = GetContentLength(dt);
+
         sheet = workbook.CreateSheet(sheetName);
-        
+
         //创建表头
-        int rowIndex = CreateHeader(sheet,workbook,arrColWidth,dt.Columns,headerIndex,headerText);
-        
+        var rowIndex = CreateHeader(sheet, workbook, arrColWidth, dt.Columns, headerIndex, headerText);
+
         //填充内容
-        CreateCellContent(sheet,workbook,dt,rowIndex,dateFormat);
-        MemoryStream ms = new MemoryStream();
+        CreateCellContent(sheet, workbook, dt, rowIndex, dateFormat);
+        var ms = new MemoryStream();
         workbook.Write(ms, true);
         ms.Flush();
         ms.Position = 0;
         return ms;
     }
-    
+
     /// <summary>
-    /// 将DataTable导出为Excel（通过文件流）
+    ///     将DataTable导出为Excel（通过文件流）
     /// </summary>
     /// <param name="dt">数据源DataTable</param>
     /// <param name="fs">文件流</param>
@@ -70,38 +67,36 @@ public static class ExcelHelper
     /// <param name="headerIndex">表头索引，默认-1为不需要</param>
     /// <param name="dateFormat">日期时间格式化字符串</param>
     public static FileStream ExportDataTable(DataTable dt,
-        string sheetName="Sheet1", string headerText="",int headerIndex=-1,string dateFormat="yyyy-mm-dd hh:mm:ss")
+        string sheetName = "Sheet1", string headerText = "", int headerIndex = -1,
+        string dateFormat = "yyyy-mm-dd hh:mm:ss")
     {
         IWorkbook workbook = new XSSFWorkbook();
         ISheet sheet = null;
-        ICellStyle dateStyle = workbook.CreateCellStyle();
-        IDataFormat format = workbook.CreateDataFormat();
+        var dateStyle = workbook.CreateCellStyle();
+        var format = workbook.CreateDataFormat();
         dateStyle.DataFormat = format.GetFormat("yyyy-mm-dd");
         //取得列宽
-        int[] arrColWidth = GetContentLength(dt);
-        
-        if (workbook.GetSheetIndex(sheetName) >= 0)
-        {
-            workbook.RemoveSheetAt(workbook.GetSheetIndex(sheetName));
-        }
+        var arrColWidth = GetContentLength(dt);
+
+        if (workbook.GetSheetIndex(sheetName) >= 0) workbook.RemoveSheetAt(workbook.GetSheetIndex(sheetName));
 
         sheet = workbook.CreateSheet(sheetName);
-        
+
         //创建表头
-        int rowIndex = CreateHeader(sheet,workbook,arrColWidth,dt.Columns,headerIndex,headerText);
-        
+        var rowIndex = CreateHeader(sheet, workbook, arrColWidth, dt.Columns, headerIndex, headerText);
+
         //填充内容
-        CreateCellContent(sheet,workbook,dt,rowIndex,dateFormat);
-        string fileName = $"temp{DateTime.Now.ToString("yyyyMMddhhmmss")}.xlsx";
-        var fs = new FileStream($"./{fileName}",FileMode.OpenOrCreate,FileAccess.ReadWrite);
+        CreateCellContent(sheet, workbook, dt, rowIndex, dateFormat);
+        var fileName = $"temp{DateTime.Now.ToString("yyyyMMddhhmmss")}.xlsx";
+        var fs = new FileStream($"./{fileName}", FileMode.OpenOrCreate, FileAccess.ReadWrite);
         workbook.Write(fs);
 
         return fs;
     }
 
-    
+
     /// <summary>
-    /// 根据DataTable的Column集合创建表头
+    ///     根据DataTable的Column集合创建表头
     /// </summary>
     /// <param name="sheet">创建表头的表单</param>
     /// <param name="workbook">表单所属工作簿</param>
@@ -111,10 +106,10 @@ public static class ExcelHelper
     /// <param name="headerIndex">表头索引,不需要表头时设置为-1</param>
     /// <param name="headerText">表头标题内容</param>
     /// <returns name="rowIndex">返回创建表头后的下一行</returns>
-    public static int CreateHeader(ISheet sheet, IWorkbook workbook,int[] arrColWidth,
-        DataColumnCollection columns, int headerIndex = -1,string headerText="")
+    public static int CreateHeader(ISheet sheet, IWorkbook workbook, int[] arrColWidth,
+        DataColumnCollection columns, int headerIndex = -1, string headerText = "")
     {
-        int rowIndex = headerIndex;
+        var rowIndex = headerIndex;
         //需要表头是合并第一行作为表头
         if (headerIndex >= 0)
         {
@@ -134,23 +129,23 @@ public static class ExcelHelper
         }
 
         rowIndex++;
-        
+
         //创建列头
-        IRow columnRow = sheet.CreateRow(rowIndex);
+        var columnRow = sheet.CreateRow(rowIndex);
         var columnStyle = workbook.CreateCellStyle();
         columnStyle.Alignment = HorizontalAlignment.Center;
         var font1 = workbook.CreateFont();
         font1.FontHeightInPoints = 10;
         font1.IsBold = true;
         //写入列标题
-        foreach (DataColumn column in columns)   
+        foreach (DataColumn column in columns)
         {
             columnRow.CreateCell(column.Ordinal).SetCellValue(column.ColumnName);
             columnRow.GetCell(column.Ordinal).CellStyle = columnStyle;
             // sheet.SetColumnWidth(column.Ordinal,((arrColWidth[column.Ordinal]+1)*256*2)>256?256:(arrColWidth[column.Ordinal]+1)*256*2);
 
-            int tmp = (arrColWidth[column.Ordinal] + 1) * 256 * 2;
-            int width = tmp > MAX_COL_WIDTH ? MAX_COL_WIDTH : tmp;
+            var tmp = (arrColWidth[column.Ordinal] + 1) * 256 * 2;
+            var width = tmp > MAX_COL_WIDTH ? MAX_COL_WIDTH : tmp;
             sheet.SetColumnWidth(column.Ordinal, width);
         }
 
@@ -160,19 +155,19 @@ public static class ExcelHelper
     }
 
     /// <summary>
-    /// 填充Excel内容
+    ///     填充Excel内容
     /// </summary>
     /// <param name="sheet">填充表单</param>
     /// <param name="workbook">填充工作簿</param>
     /// <param name="dt">DataTable</param>
     /// <param name="rowIndex">填充行号</param>
     /// <param name="dateFormat">日期时间格式化字符串</param>
-    public static void CreateCellContent(ISheet sheet, IWorkbook workbook, DataTable dt, 
-        int rowIndex,string dateFormat="yyyy-mm-dd hh:mm:ss")
+    public static void CreateCellContent(ISheet sheet, IWorkbook workbook, DataTable dt,
+        int rowIndex, string dateFormat = "yyyy-mm-dd hh:mm:ss")
     {
         foreach (DataRow row in dt.Rows)
         {
-            IRow dataRow = sheet.CreateRow(rowIndex);
+            var dataRow = sheet.CreateRow(rowIndex);
 
             foreach (DataColumn column in dt.Columns)
             {
@@ -188,11 +183,9 @@ public static class ExcelHelper
                             newCell.SetCellValue(result);
                             break;
                         }
-                        else
-                        {
-                            newCell.SetCellValue(drValue);
-                            break;
-                        }
+
+                        newCell.SetCellValue(drValue);
+                        break;
                     case PropertyTypeConstant.DATETIME:
                         DateTime dateV;
                         DateTime.TryParse(drValue, out dateV);
@@ -200,7 +193,7 @@ public static class ExcelHelper
                         newCell.CellStyle.DataFormat = workbook.CreateDataFormat().GetFormat(dateFormat);
                         break;
                     case PropertyTypeConstant.BOOLEAN:
-                        bool boolV=false;
+                        var boolV = false;
                         bool.TryParse(drValue, out boolV);
                         newCell.SetCellValue(boolV);
                         break;
@@ -208,7 +201,7 @@ public static class ExcelHelper
                     case PropertyTypeConstant.INT32:
                     case PropertyTypeConstant.INT64:
                     case PropertyTypeConstant.BYTE:
-                        int intV = 0;
+                        var intV = 0;
                         int.TryParse(drValue, out intV);
                         newCell.SetCellValue(intV);
                         break;
@@ -222,7 +215,7 @@ public static class ExcelHelper
                         newCell.SetCellValue("");
                         break;
                     default:
-                        newCell.SetCellValue(drValue.ToString());
+                        newCell.SetCellValue(drValue);
                         break;
                 }
             }
@@ -230,10 +223,10 @@ public static class ExcelHelper
             rowIndex++;
         }
     }
-    
+
 
     /// <summary>
-    /// 将实体列表转换成DataTable
+    ///     将实体列表转换成DataTable
     /// </summary>
     /// <param name="entityList"></param>
     /// <typeparam name="T"></typeparam>
@@ -241,7 +234,7 @@ public static class ExcelHelper
     public static DataTable ListToDataTable<T>(List<T> entityList)
     {
         var propertyInfos = typeof(T).GetProperties()
-            .Where(p=>p.GetCustomAttributes(typeof(ExcelAttribute),false).Length>0)
+            .Where(p => p.GetCustomAttributes(typeof(ExcelAttribute), false).Length > 0)
             .ToList();
         var table = new DataTable();
         //按照注解ColumIndex属性排序
@@ -256,7 +249,7 @@ public static class ExcelHelper
             var attribute = propertyInfo.GetCustomAttribute<ExcelAttribute>();
             table.Columns.Add(attribute!.ExcelFieldName);
         }
-        
+
         foreach (var entity in entityList)
         {
             var dataRow = table.NewRow();
@@ -269,14 +262,13 @@ public static class ExcelHelper
 
             table.Rows.Add(dataRow);
         }
+
         return table;
     }
-    
-    
-    
-    
+
+
     /// <summary>
-    /// 将指定sheet中的数据导出到DataTable
+    ///     将指定sheet中的数据导出到DataTable
     /// </summary>
     /// <param name="sheet">需要导出的sheet</param>
     /// <param name="headerRowIndex">表头所在行号，-1表示没有表头</param>
@@ -284,7 +276,7 @@ public static class ExcelHelper
     /// <returns></returns>
     public static DataTable ExcelToDataTable(ISheet sheet, int headerRowIndex, Dictionary<string, string> dir)
     {
-        DataTable table = new DataTable();
+        var table = new DataTable();
         IRow headerRow;
         int cellCount;
         try
@@ -296,7 +288,7 @@ public static class ExcelHelper
                 cellCount = headerRow.LastCellNum;
                 for (int i = headerRow.FirstCellNum; i <= cellCount; i++)
                 {
-                    DataColumn column = new DataColumn(Convert.ToString(i));
+                    var column = new DataColumn(Convert.ToString(i));
                     table.Columns.Add(column);
                 }
             }
@@ -306,25 +298,24 @@ public static class ExcelHelper
                 headerRow = sheet.GetRow(headerRowIndex);
                 cellCount = headerRow.LastCellNum;
                 for (int i = headerRow.FirstCellNum; i < cellCount; i++)
-                {
                     //excel某一列列名不存在，则以该列序号作为列名；如果DataTable包含重复列名，列名为重复列名+序号
                     if (headerRow.GetCell(i) == null)
                     {
                         if (table.Columns.IndexOf(Convert.ToString(i)) > 0)
                         {
-                            DataColumn column = new DataColumn(Convert.ToString("重复列名" + i));
+                            var column = new DataColumn(Convert.ToString("重复列名" + i));
                             table.Columns.Add(column);
                         }
                         else
                         {
-                            DataColumn column = new DataColumn(Convert.ToString(i));
+                            var column = new DataColumn(Convert.ToString(i));
                             table.Columns.Add(column);
                         }
                     }
                     //某一列列名不为空，但是重复，列名为“重复列名+序号”
-                    else if (table.Columns.IndexOf(headerRow.GetCell(i).ToString())>0)
+                    else if (table.Columns.IndexOf(headerRow.GetCell(i).ToString()) > 0)
                     {
-                        var column = new DataColumn(Convert.ToString("重复列名"+i));
+                        var column = new DataColumn(Convert.ToString("重复列名" + i));
                         table.Columns.Add(column);
                     }
                     //列名不重复且存在
@@ -332,60 +323,43 @@ public static class ExcelHelper
                     {
                         var str = headerRow.GetCell(i).ToString();
                         var colName = dir
-                            .FirstOrDefault(s => s.Value==str,
-                                new KeyValuePair<string, string>(str,str)).Key;
+                            .FirstOrDefault(s => s.Value == str,
+                                new KeyValuePair<string, string>(str, str)).Key;
                         var column = new DataColumn(colName);
                         table.Columns.Add(column);
                     }
-                }
             }
 
-            int rowCount = sheet.LastRowNum;
-            for (int i = (headerRowIndex+1); i <=rowCount; i++)
-            {
+            var rowCount = sheet.LastRowNum;
+            for (var i = headerRowIndex + 1; i <= rowCount; i++)
                 try
                 {
                     IRow row;
                     //excel有空行，跳过读取下一行
                     if (sheet.GetRow(i) == null)
-                    {
                         continue;
-                        // row = sheet.CreateRow(i);
-                    }
-                    else
-                    {
-                        row = sheet.GetRow(i);
-                    }
+                    // row = sheet.CreateRow(i);
+                    row = sheet.GetRow(i);
 
-                    DataRow dataRow = table.NewRow();
-                    for (int j = row.FirstCellNum; j <= cellCount; j++)//excel列遍历
-                    {
+                    var dataRow = table.NewRow();
+                    for (int j = row.FirstCellNum; j <= cellCount; j++) //excel列遍历
                         try
                         {
                             if (row.GetCell(j) != null)
-                            {
                                 switch (row.GetCell(j).CellType)
                                 {
-                                    case CellType.String://字符串
+                                    case CellType.String: //字符串
                                         var str = row.GetCell(j).StringCellValue;
                                         if (!string.IsNullOrEmpty(str) && str.Length > 0)
-                                        {
                                             dataRow[j] = str;
-                                        }
                                         else
-                                        {
                                             dataRow[j] = default(string);
-                                        }
                                         break;
-                                    case CellType.Numeric://数字
-                                        if (DateUtil.IsCellDateFormatted(row.GetCell(j)))//时间戳数字
-                                        {
+                                    case CellType.Numeric: //数字
+                                        if (DateUtil.IsCellDateFormatted(row.GetCell(j))) //时间戳数字
                                             dataRow[j] = DateTime.FromOADate(row.GetCell(j).NumericCellValue);
-                                        }
                                         else
-                                        {
                                             dataRow[j] = Convert.ToDouble(row.GetCell(j).NumericCellValue);
-                                        }
                                         break;
                                     case CellType.Boolean:
                                         dataRow[j] = Convert.ToString(row.GetCell(j).BooleanCellValue);
@@ -399,13 +373,9 @@ public static class ExcelHelper
                                             case CellType.String:
                                                 var strFormula = row.GetCell(j).StringCellValue;
                                                 if (!string.IsNullOrEmpty(strFormula) && strFormula.Length > 0)
-                                                {
                                                     dataRow[j] = strFormula;
-                                                }
                                                 else
-                                                {
                                                     dataRow[j] = null;
-                                                }
                                                 break;
                                             case CellType.Numeric:
                                                 dataRow[j] = Convert.ToString(row.GetCell(j).NumericCellValue);
@@ -420,19 +390,18 @@ public static class ExcelHelper
                                                 dataRow[j] = "";
                                                 break;
                                         }
+
                                         break;
                                     default:
                                         dataRow[j] = "";
                                         break;
                                 }
-                            }
                         }
                         catch (Exception e)
                         {
                             Console.WriteLine(e);
                             throw;
                         }
-                    }
 
                     table.Rows.Add(dataRow);
                 }
@@ -441,7 +410,6 @@ public static class ExcelHelper
                     Console.WriteLine(e);
                     throw;
                 }
-            }
         }
         catch (Exception e)
         {
@@ -454,7 +422,7 @@ public static class ExcelHelper
 
 
     /// <summary>
-    /// 将DataTable转换成List
+    ///     将DataTable转换成List
     /// </summary>
     /// <param name="dt">Datable</param>
     /// <typeparam name="TResult">转换结果泛型</typeparam>
@@ -476,82 +444,84 @@ public static class ExcelHelper
                 var attribute = propertyInfo.GetCustomAttribute<ExcelAttribute>();
                 var value = row[attribute!.ExcelFieldName];
                 if (value != DBNull.Value)
-                {
                     switch (propertyInfo.PropertyType.FullName)
                     {
                         case PropertyTypeConstant.STRING:
-                            propertyInfo.SetValue(entity,value);
+                            propertyInfo.SetValue(entity, value);
                             break;
                         case PropertyTypeConstant.INT16:
                             var int16 = Convert.ToInt16(value);
-                            propertyInfo.SetValue(entity,int16);
+                            propertyInfo.SetValue(entity, int16);
                             break;
                         case PropertyTypeConstant.INT32:
                             var int32 = Convert.ToInt32(value);
-                            propertyInfo.SetValue(entity,int32);
+                            propertyInfo.SetValue(entity, int32);
                             break;
                         case PropertyTypeConstant.INT64:
                             var int64 = Convert.ToInt64(value);
-                            propertyInfo.SetValue(entity,int64);
+                            propertyInfo.SetValue(entity, int64);
                             break;
                         case PropertyTypeConstant.BOOLEAN:
                             var boolean = Convert.ToBoolean(value);
-                            propertyInfo.SetValue(entity,boolean);
+                            propertyInfo.SetValue(entity, boolean);
                             break;
                         case PropertyTypeConstant.DECIMAL:
                         case PropertyTypeConstant.DOUBLE:
                             var v = Convert.ToDecimal(value);
-                            propertyInfo.SetValue(entity,v);
+                            propertyInfo.SetValue(entity, v);
                             break;
                         case PropertyTypeConstant.DATETIME:
                             var dateTime = Convert.ToDateTime(value);
-                            propertyInfo.SetValue(entity,dateTime);
+                            propertyInfo.SetValue(entity, dateTime);
                             break;
                         default:
                             if (propertyInfo.PropertyType.BaseType == typeof(Enum))
                             {
                                 var val = Convert.ToInt32(value);
-                                propertyInfo.SetValue(entity,val);
+                                propertyInfo.SetValue(entity, val);
                             }
+
                             break;
                     }
-                }
             }
+
             result.Add(entity);
         }
+
         return result;
     }
-    
+
 
     /// <summary>
-    /// 将Excel中数据导入成实体类
+    ///     将Excel中数据导入成实体类
     /// </summary>
     /// <param name="filePath">文件路径</param>
     /// <param name="sheetName">sheet名称</param>
     /// <param name="headerRowIndex">表头索引</param>
     /// <typeparam name="T">导入实体类型</typeparam>
     /// <returns></returns>
-    public static List<T> ImportExcelToEntityList<T>(string filePath, 
-        string sheetName="Sheet1", 
-        int headerRowIndex = 0) where T:class,new()
+    public static List<T> ImportExcelToEntityList<T>(string filePath,
+        string sheetName = "Sheet1",
+        int headerRowIndex = 0) where T : class, new()
     {
         var table = new DataTable();
-        using (FileStream file=new FileStream(filePath,FileMode.Open,FileAccess.Read))
+        using (var file = new FileStream(filePath, FileMode.Open, FileAccess.Read))
         {
             if (file.Length > 0)
             {
-                IWorkbook wb = WorkbookFactory.Create(file);
-                ISheet sheet = wb.GetSheet(sheetName);
+                var wb = WorkbookFactory.Create(file);
+                var sheet = wb.GetSheet(sheetName);
                 table = ExcelToDataTable(sheet, headerRowIndex, new Dictionary<string, string>());
             }
         }
-        List<T> result = table.DataTableToList<T>();
+
+        var result = table.DataTableToList<T>();
         table.Dispose();
         return result;
     }
 
     /// <summary>
-    /// 从文件流中读取实体列表
+    ///     从文件流中读取实体列表
     /// </summary>
     /// <param name="fileStream">文件流</param>
     /// <param name="sheetName">sheet名称</param>
@@ -564,46 +534,46 @@ public static class ExcelHelper
     {
         var table = new DataTable();
 
-            if (fileStream.Length > 0)
-            {
-                IWorkbook wb = WorkbookFactory.Create(fileStream);
-                ISheet sheet = wb.GetSheet(sheetName);
-                table = ExcelToDataTable(sheet, headerRowIndex, new Dictionary<string, string>());
-            }
+        if (fileStream.Length > 0)
+        {
+            var wb = WorkbookFactory.Create(fileStream);
+            var sheet = wb.GetSheet(sheetName);
+            table = ExcelToDataTable(sheet, headerRowIndex, new Dictionary<string, string>());
+        }
 
-        List<T> result = table.DataTableToList<T>();
+        var result = table.DataTableToList<T>();
         table.Dispose();
         return result;
     }
-    
-    
+
+
     /// <summary>
-    /// 判断内容是否是数字
+    ///     判断内容是否是数字
     /// </summary>
     /// <param name="message"></param>
     /// <param name="result"></param>
     /// <returns></returns>
-    public static bool IsNumeric(String message, out double result)
+    public static bool IsNumeric(string message, out double result)
     {
-        Regex rex = new Regex(@"^[-]?\d+[.]?\d*$");
+        var rex = new Regex(@"^[-]?\d+[.]?\d*$");
         result = -1;
         if (rex.IsMatch(message))
         {
             result = double.Parse(message);
             return true;
         }
-        else
-            return false;
+
+        return false;
     }
 
     /// <summary>
-    /// 返回每一列列宽集合
+    ///     返回每一列列宽集合
     /// </summary>
     /// <param name="dataTable">数据源</param>
     /// <returns></returns>
     private static int[] GetContentLength(DataTable dataTable)
     {
-        int[] arrColWidth = new int[dataTable.Columns.Count];
+        var arrColWidth = new int[dataTable.Columns.Count];
         foreach (DataColumn item in dataTable.Columns)
         {
             var length = Encoding.UTF8.GetBytes(item.ColumnName).Length;
@@ -611,16 +581,13 @@ public static class ExcelHelper
         }
 
         foreach (DataRow row in dataTable.Rows)
-        {
-            for (int j = 0; j < dataTable.Columns.Count; j++)
+            for (var j = 0; j < dataTable.Columns.Count; j++)
             {
                 var tmp = Encoding.UTF8.GetBytes(row[j].ToString() ?? string.Empty).Length;
-                int length = tmp > 255 ? 255 : tmp;
-                arrColWidth[j]=int.Max(arrColWidth[j],length);
+                var length = tmp > 255 ? 255 : tmp;
+                arrColWidth[j] = int.Max(arrColWidth[j], length);
             }
-        }
 
         return arrColWidth;
     }
 }
-

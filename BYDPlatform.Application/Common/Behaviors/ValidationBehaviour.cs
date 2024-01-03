@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-using BYDPlatform.Application.Common.Extensions;
 using FluentValidation;
 using FluentValidation.Results;
 using MediatR;
@@ -7,15 +5,19 @@ using ValidationException = BYDPlatform.Application.Common.Exceptions.Validation
 
 namespace BYDPlatform.Application.Common.Behaviors;
 
-public class ValidationBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse> 
+public class ValidationBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
     private readonly IEnumerable<IValidator<TRequest>> _validators;
 
-    public ValidationBehaviour(IEnumerable<IValidator<TRequest>> validators) => _validators = validators;
-    
-    
-    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    public ValidationBehaviour(IEnumerable<IValidator<TRequest>> validators)
+    {
+        _validators = validators;
+    }
+
+
+    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next,
+        CancellationToken cancellationToken)
     {
         if (_validators.Any())
         {
@@ -28,10 +30,7 @@ public class ValidationBehaviour<TRequest, TResponse> : IPipelineBehavior<TReque
                     => r.Errors.Any())
                 .SelectMany(r => r.Errors)
                 .ToList();
-            if (failures.Any())
-            {
-                throw new ValidationException(GetValidationErrorMessage(failures));
-            }
+            if (failures.Any()) throw new ValidationException(GetValidationErrorMessage(failures));
         }
 
         return await next();

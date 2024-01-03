@@ -1,9 +1,8 @@
 using System.Linq.Expressions;
 
-
 namespace BYDPlatform.Application.Common.Interfaces;
 
-public interface IRepository<T> where T:class
+public interface IRepository<T> where T : class
 {
     Task<T> AddAsync(T entity, CancellationToken cancellationToken = default);
     Task AddRange(List<T> entities, CancellationToken cancellationToken = default);
@@ -18,16 +17,16 @@ public interface IRepository<T> where T:class
     //基础查询接口
     IQueryable<T> GetAsQueryable();
     IQueryable<T> GetAsQueryable(ISpecification<T> spec);
-    
+
     //查询数量相关接口
     int Count(ISpecification<T>? spec = null);
     int Count(Expression<Func<T, bool>> condition);
     Task<int> CountAsync(ISpecification<T>? spec);
-    
+
     //查询存在性相关接口
     bool Any(ISpecification<T>? spec);
     bool Any(Expression<Func<T, bool>>? condition = null);
-    
+
     //根据条件获取原始实体类型相关接口
     Task<T?> GetAsync(Expression<Func<T, bool>> condition);
     Task<IReadOnlyList<T>> GetAsync();
@@ -39,7 +38,7 @@ public interface IRepository<T> where T:class
 
     Task<IReadOnlyList<TResult>> SelectAsync<TResult>(Expression<Func<T, TResult>> selector);
     Task<IReadOnlyList<TResult>> SelectAsync<TResult>(ISpecification<T>? spec, Expression<Func<T, TResult>> selector);
-    Task<IReadOnlyList<TResult>> SelectAsync<TGroup, TResult>(Expression<Func<T, TGroup>> groupExpression, 
-        Expression<Func<IGrouping<TGroup, T>, TResult>> selector, ISpecification<T>? spec = null);
 
+    Task<IReadOnlyList<TResult>> SelectAsync<TGroup, TResult>(Expression<Func<T, TGroup>> groupExpression,
+        Expression<Func<IGrouping<TGroup, T>, TResult>> selector, ISpecification<T>? spec = null);
 }

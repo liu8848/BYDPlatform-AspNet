@@ -3,12 +3,13 @@ using MediatR;
 
 namespace BYDPlatform.Application.BusinessDivision.Commands.CreateBusinessDivision;
 
-public class CreateBusinessDivisionCommand:IRequest<Domain.Entities.BusinessDivision>
+public class CreateBusinessDivisionCommand : IRequest<Domain.Entities.BusinessDivision>
 {
     public string BuName { get; set; }
 }
 
-public class CreateBusinessDivisionHandler : IRequestHandler<CreateBusinessDivisionCommand, Domain.Entities.BusinessDivision>
+public class
+    CreateBusinessDivisionHandler : IRequestHandler<CreateBusinessDivisionCommand, Domain.Entities.BusinessDivision>
 {
     private readonly IRepository<Domain.Entities.BusinessDivision> _repository;
 
@@ -17,9 +18,10 @@ public class CreateBusinessDivisionHandler : IRequestHandler<CreateBusinessDivis
         _repository = repository;
     }
 
-    public async Task<Domain.Entities.BusinessDivision> Handle(CreateBusinessDivisionCommand request, CancellationToken cancellationToken)
+    public async Task<Domain.Entities.BusinessDivision> Handle(CreateBusinessDivisionCommand request,
+        CancellationToken cancellationToken)
     {
-        var entity = new Domain.Entities.BusinessDivision()
+        var entity = new Domain.Entities.BusinessDivision
         {
             BuName = request.BuName
         };

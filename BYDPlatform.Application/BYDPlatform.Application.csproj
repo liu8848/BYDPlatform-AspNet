@@ -11,35 +11,35 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Remove="Common\Interfaces\IRepositories\**" />
-      <Compile Remove="Common\Tools\dc.cs" />
+        <Compile Remove="Common\Interfaces\IRepositories\**"/>
+        <Compile Remove="Common\Tools\dc.cs"/>
     </ItemGroup>
 
     <ItemGroup>
-      <EmbeddedResource Remove="Common\Interfaces\IRepositories\**" />
+        <EmbeddedResource Remove="Common\Interfaces\IRepositories\**"/>
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="Common\Interfaces\IRepositories\**" />
+        <None Remove="Common\Interfaces\IRepositories\**"/>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
-      <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.8.1" />
-      <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0" />
-      <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.2" />
-      <PackageReference Include="NPOI" Version="2.6.2" />
+        <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1"/>
+        <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.8.1"/>
+        <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.2"/>
+        <PackageReference Include="NPOI" Version="2.6.2"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="BusinessDivision\EventHandlers\" />
+        <Folder Include="BusinessDivision\EventHandlers\"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Reference Include="Serilog">
-        <HintPath>..\..\..\..\.nuget\packages\serilog\3.1.1\lib\net7.0\Serilog.dll</HintPath>
-      </Reference>
+        <Reference Include="Serilog">
+            <HintPath>..\..\..\..\.nuget\packages\serilog\3.1.1\lib\net7.0\Serilog.dll</HintPath>
+        </Reference>
     </ItemGroup>
 
 </Project>

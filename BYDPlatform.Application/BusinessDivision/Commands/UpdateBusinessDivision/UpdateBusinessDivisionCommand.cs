@@ -4,13 +4,15 @@ using MediatR;
 
 namespace BYDPlatform.Application.BusinessDivision.Commands.UpdateBusinessDivision;
 
-public class UpdateBusinessDivisionCommand:IRequest<Domain.Entities.BusinessDivision>
+public class UpdateBusinessDivisionCommand : IRequest<Domain.Entities.BusinessDivision>
 {
     public int Id { get; set; }
     public string? BuName { get; set; }
 }
 
-public class UpdateBusinessDivisionCommandHandler : IRequestHandler<UpdateBusinessDivisionCommand, Domain.Entities.BusinessDivision>
+public class
+    UpdateBusinessDivisionCommandHandler : IRequestHandler<UpdateBusinessDivisionCommand,
+    Domain.Entities.BusinessDivision>
 {
     private readonly IRepository<Domain.Entities.BusinessDivision> _repository;
 
@@ -19,13 +21,11 @@ public class UpdateBusinessDivisionCommandHandler : IRequestHandler<UpdateBusine
         _repository = repository;
     }
 
-    public async Task<Domain.Entities.BusinessDivision> Handle(UpdateBusinessDivisionCommand request, CancellationToken cancellationToken)
+    public async Task<Domain.Entities.BusinessDivision> Handle(UpdateBusinessDivisionCommand request,
+        CancellationToken cancellationToken)
     {
         var entity = await _repository.GetAsync(request.Id);
-        if (entity is null)
-        {
-            throw new NotFoundException(nameof(Domain.Entities.BusinessDivision), request.Id);
-        }
+        if (entity is null) throw new NotFoundException(nameof(Domain.Entities.BusinessDivision), request.Id);
 
         entity.BuName = request.BuName ?? entity.BuName;
 

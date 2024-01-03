@@ -15,13 +15,12 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace BYDPlatform.Application.Services.BusinessDivision;
 
-
 [Service(LifeTime = ServiceLifetime.Scoped)]
-public class BusinessDivisionService:IBusinessDivisionService
+public class BusinessDivisionService : IBusinessDivisionService
 {
-    private readonly IRepository<Domain.Entities.BusinessDivision> _repository;
-    private readonly IMapper _mapper;
     private readonly IDataShaper<Domain.Entities.BusinessDivision> _dataShaper;
+    private readonly IMapper _mapper;
+    private readonly IRepository<Domain.Entities.BusinessDivision> _repository;
 
     public BusinessDivisionService(
         IRepository<Domain.Entities.BusinessDivision> repository,
@@ -35,7 +34,7 @@ public class BusinessDivisionService:IBusinessDivisionService
 
     public async Task<Domain.Entities.BusinessDivision> GetById(int id)
     {
-        var bu = await _repository.GetAsQueryable().FirstOrDefaultAsync(b => b.Id==id);
+        var bu = await _repository.GetAsQueryable().FirstOrDefaultAsync(b => b.Id == id);
         return bu!;
     }
 
@@ -71,10 +70,7 @@ public class BusinessDivisionService:IBusinessDivisionService
     {
         var updateDto = (BusinessDivisionCreateOrUpdateDto)update;
         var bu = await _repository.GetAsync(updateDto.Id);
-        if (bu is null)
-        {
-            throw new NotFoundException(nameof(Domain.Entities.BusinessDivision), updateDto.Id);
-        }
+        if (bu is null) throw new NotFoundException(nameof(Domain.Entities.BusinessDivision), updateDto.Id);
 
         bu.BuName = updateDto.BuName ?? bu.BuName;
         await _repository.UpdateAsync(bu);
@@ -84,15 +80,12 @@ public class BusinessDivisionService:IBusinessDivisionService
     public async Task<object> Delete(object id)
     {
         var bu = await _repository.GetAsync((int)id);
-        if (bu is null)
-        {
-            throw new NotFoundException(nameof(Domain.Entities.BusinessDivision), id);
-        }
+        if (bu is null) throw new NotFoundException(nameof(Domain.Entities.BusinessDivision), id);
 
         await _repository.DeleteAsync(bu);
         return Unit.Value;
     }
-    
+
 
     public async Task<PaginatedList<Domain.Entities.BusinessDivision>> GetPageQueryList(IBaseQueryDto query)
     {
@@ -101,11 +94,11 @@ public class BusinessDivisionService:IBusinessDivisionService
             .GetAsQueryable()
             .AsNoTracking()
             .Where(
-                bu=>
-                    (string.IsNullOrEmpty(queryDto.BuName)||bu.BuName.Contains(queryDto.BuName))
+                bu =>
+                    string.IsNullOrEmpty(queryDto.BuName) || bu.BuName.Contains(queryDto.BuName)
             )
-            .OrderBy(bu=>bu.Id)
-            .PaginatedListAsync(queryDto.PageNumber,queryDto.PageSize);
+            .OrderBy(bu => bu.Id)
+            .PaginatedListAsync(queryDto.PageNumber, queryDto.PageSize);
         return pageResult;
     }
 
@@ -116,15 +109,16 @@ public class BusinessDivisionService:IBusinessDivisionService
             .GetAsQueryable()
             .AsNoTracking()
             .Where(
-                bu=>
-                    (string.IsNullOrEmpty(queryDto.BuName)||bu.BuName.Contains(queryDto.BuName))
+                bu =>
+                    string.IsNullOrEmpty(queryDto.BuName) || bu.BuName.Contains(queryDto.BuName)
             )
-            .OrderBy(bu=>bu.Id)
-            .PaginatedListAsync(queryDto.PageNumber,queryDto.PageSize);
+            .OrderBy(bu => bu.Id)
+            .PaginatedListAsync(queryDto.PageNumber, queryDto.PageSize);
         return pageResult.ShapeData(_dataShaper, queryDto.Fields);
     }
-    
-    public async Task<List<Domain.Entities.BusinessDivision>> BatchInsert(List<Domain.Entities.BusinessDivision> insertList)
+
+    public async Task<List<Domain.Entities.BusinessDivision>> BatchInsert(
+        List<Domain.Entities.BusinessDivision> insertList)
     {
         throw new NotImplementedException();
     }

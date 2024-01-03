@@ -1,6 +1,4 @@
 using System.Dynamic;
-using System.Net.Http.Headers;
-using System.Text;
 using AutoMapper;
 using BYDPlatform.Api.Filters;
 using BYDPlatform.Api.Models;
@@ -8,13 +6,11 @@ using BYDPlatform.Application.Common.Extensions;
 using BYDPlatform.Application.Common.Model;
 using BYDPlatform.Application.Common.Tools;
 using BYDPlatform.Application.Services.Factory;
-using BYDPlatform.Domain.DTOs.Base;
 using BYDPlatform.Domain.DTOs.RegisterFactory;
 using BYDPlatform.Domain.Entities;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MediaTypeHeaderValue = Microsoft.Net.Http.Headers.MediaTypeHeaderValue;
 
 namespace BYDPlatform.Api.Controllers;
 
@@ -24,8 +20,8 @@ namespace BYDPlatform.Api.Controllers;
 public class FactoryController : ControllerBase
 {
     private readonly IFactoryService _factoryService;
-    private readonly IValidator<RegisterFactoryCreateOrUpdateDto> _validator;
     private readonly IMapper _mapper;
+    private readonly IValidator<RegisterFactoryCreateOrUpdateDto> _validator;
 
     public FactoryController(IFactoryService factoryService,
         IValidator<RegisterFactoryCreateOrUpdateDto> validator,
@@ -41,7 +37,7 @@ public class FactoryController : ControllerBase
     public async Task<ApiResponse<RegisterFactory>> Create([FromBody] RegisterFactoryCreateOrUpdateDto create)
     {
         await _validator.ValidateAndThrowAsync(create);
-        
+
         var registerFactory = await _factoryService.Create(create);
         return ApiResponse<RegisterFactory>.Success(registerFactory);
     }
@@ -50,19 +46,16 @@ public class FactoryController : ControllerBase
     [ServiceFilter(typeof(LogFilterAttribute))]
     public async Task<ApiResponse<object>> Delete(int id)
     {
-        var result =await _factoryService.Delete(id);
-        
+        var result = await _factoryService.Delete(id);
+
         return ApiResponse<object>.Success(result);
     }
 
     [HttpPut("{id:int}")]
     [ServiceFilter(typeof(LogFilterAttribute))]
-    public async Task<ApiResponse<RegisterFactory>> Update(int id,[FromBody] RegisterFactoryCreateOrUpdateDto update)
+    public async Task<ApiResponse<RegisterFactory>> Update(int id, [FromBody] RegisterFactoryCreateOrUpdateDto update)
     {
-        if (id != update.Id)
-        {
-            return ApiResponse<RegisterFactory>.Fail("Query id not match with body");
-        }
+        if (id != update.Id) return ApiResponse<RegisterFactory>.Fail("Query id not match with body");
 
         var result = await _factoryService.Update(update);
         return ApiResponse<RegisterFactory>.Success(result);
@@ -109,11 +102,11 @@ public class FactoryController : ControllerBase
     public async Task<IActionResult> BatchInsert([FromForm(Name = "file")] IFormFile file)
     {
         var createList = ExcelHelper.ImportExcelToEntityList<RegisterFactoryCreateOrUpdateDto>(file.OpenReadStream());
-        var validateResultDic =await _validator.ValidateList(createList);
+        var validateResultDic = await _validator.ValidateList(createList);
         var insertList = (List<RegisterFactoryCreateOrUpdateDto>)validateResultDic["success"];
 
         var factories = _mapper.Map<List<RegisterFactory>>(insertList);
-        if(factories.Count>0)
+        if (factories.Count > 0)
             await _factoryService.BatchInsert(factories);
 
         var errorList = (List<RegisterFactoryCreateOrUpdateDto>)validateResultDic["error"];
@@ -121,15 +114,14 @@ public class FactoryController : ControllerBase
         // var memoryStream = ExcelHelper.ExportDataTable("校验结果",dataTable);
 
         // var fs = ExcelHelper.ExportDataTable(dataTable);
-        
-        if(errorList.Count==0)
+
+        if (errorList.Count == 0)
             return Ok($"成功导入{factories.Count}条数据！");
         using var fs = ExcelHelper.ExportDataTable(dataTable);
-        
+
         return new FileStreamResult(fs, "application/vnd.ms-excel;charset=utf-8")
         {
-            FileDownloadName = "错误列表.xlsx",
-                
+            FileDownloadName = "错误列表.xlsx"
         };
     }
 }

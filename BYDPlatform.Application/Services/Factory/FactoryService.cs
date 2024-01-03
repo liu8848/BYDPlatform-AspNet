@@ -17,18 +17,18 @@ using Microsoft.Extensions.DependencyInjection;
 namespace BYDPlatform.Application.Services.Factory;
 
 [Service(LifeTime = ServiceLifetime.Scoped)]
-public class FactoryService:IFactoryService
+public class FactoryService : IFactoryService
 {
-    private readonly IRepository<RegisterFactory> _repository;
     private readonly IDataShaper<RegisterFactory> _dataShaper;
     private readonly IMapper _mapper;
+    private readonly IRepository<RegisterFactory> _repository;
 
 
     public FactoryService(
         IRepository<RegisterFactory> repository,
-        IDataShaper<RegisterFactory>dataShaper,
+        IDataShaper<RegisterFactory> dataShaper,
         IMapper mapper
-        )
+    )
     {
         _repository = repository;
         _dataShaper = dataShaper;
@@ -50,14 +50,14 @@ public class FactoryService:IFactoryService
 
     public async Task<List<RegisterFactory>> GetListQuery(IBaseQueryDto query)
     {
-        var queryDto = (RegisterFactoryQueryDto) query;
+        var queryDto = (RegisterFactoryQueryDto)query;
         var list = await _repository.GetAsQueryable()
             .AsNoTracking()
             .Where(
-                f=>
-                    (queryDto.BuId==0||f.BuId==queryDto.BuId)&&
-                    (string.IsNullOrEmpty(queryDto.FactoryName)||f.FactoryName.Contains(queryDto.FactoryName))&&
-                    (queryDto.Level==null||f.Level==queryDto.Level)
+                f =>
+                    (queryDto.BuId == 0 || f.BuId == queryDto.BuId) &&
+                    (string.IsNullOrEmpty(queryDto.FactoryName) || f.FactoryName.Contains(queryDto.FactoryName)) &&
+                    (queryDto.Level == null || f.Level == queryDto.Level)
             )
             .ToListAsync();
         return list;
@@ -70,11 +70,11 @@ public class FactoryService:IFactoryService
         var pageList = await _repository.GetAsQueryable()
             .AsNoTracking()
             .Where(
-                f=>
-                    (queryDto.BuId==0||f.BuId==queryDto.BuId)&&
-                    (string.IsNullOrEmpty(queryDto.FactoryName)||f.FactoryName.Contains(queryDto.FactoryName))&&
-                    (queryDto.Level==null||f.Level==queryDto.Level)
-            ).PaginatedListAsync(queryDto.PageNumber,queryDto.PageSize);
+                f =>
+                    (queryDto.BuId == 0 || f.BuId == queryDto.BuId) &&
+                    (string.IsNullOrEmpty(queryDto.FactoryName) || f.FactoryName.Contains(queryDto.FactoryName)) &&
+                    (queryDto.Level == null || f.Level == queryDto.Level)
+            ).PaginatedListAsync(queryDto.PageNumber, queryDto.PageSize);
         return pageList;
     }
 
@@ -87,13 +87,13 @@ public class FactoryService:IFactoryService
     public async Task<RegisterFactory> Create(IBaseCreateOrUpdateDto create)
     {
         var dto = (RegisterFactoryCreateOrUpdateDto)create;
-        
+
         var entity = new RegisterFactory();
 
         entity.BuId = dto.BuId;
         entity.FactoryName = dto.FactoryName;
         entity.Level = dto.Level;
-        
+
         await _repository.AddAsync(entity);
         return entity;
     }
@@ -102,26 +102,23 @@ public class FactoryService:IFactoryService
     {
         var updateDto = (RegisterFactoryCreateOrUpdateDto)update;
 
-         var entity= await _repository.GetAsync((int)updateDto.Id);
-         if (entity is null)
-             throw new NotFoundException(nameof(RegisterFactory), updateDto.Id);
-         
-         entity.FactoryName = updateDto.FactoryName ?? entity.FactoryName;
-         entity.Level = updateDto.Level;
+        var entity = await _repository.GetAsync(updateDto.Id);
+        if (entity is null)
+            throw new NotFoundException(nameof(RegisterFactory), updateDto.Id);
 
-         await _repository.UpdateAsync(entity);
-         return entity;
+        entity.FactoryName = updateDto.FactoryName ?? entity.FactoryName;
+        entity.Level = updateDto.Level;
+
+        await _repository.UpdateAsync(entity);
+        return entity;
     }
 
     public async Task<object> Delete(object id)
     {
         var entity = _repository
             .GetAsQueryable()
-            .FirstOrDefault(f => f.Id==(int)id);
-        if (entity is null)
-        {
-            throw new NotFoundException(nameof(RegisterFactory), id);
-        }
+            .FirstOrDefault(f => f.Id == (int)id);
+        if (entity is null) throw new NotFoundException(nameof(RegisterFactory), id);
 
         await _repository.DeleteAsync(entity);
         return Unit.Value;
@@ -132,5 +129,4 @@ public class FactoryService:IFactoryService
         await _repository.AddRange(insertList);
         return insertList;
     }
-    
 }

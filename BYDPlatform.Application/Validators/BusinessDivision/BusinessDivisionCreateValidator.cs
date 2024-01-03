@@ -6,7 +6,7 @@ using Serilog;
 
 namespace BYDPlatform.Application.Validators.BusinessDivision;
 
-public class BusinessDivisionCreateValidator:AbstractValidator<BusinessDivisionCreateOrUpdateDto>
+public class BusinessDivisionCreateValidator : AbstractValidator<BusinessDivisionCreateOrUpdateDto>
 {
     private readonly IRepository<Domain.Entities.BusinessDivision> _repository;
 
@@ -14,13 +14,13 @@ public class BusinessDivisionCreateValidator:AbstractValidator<BusinessDivisionC
     {
         Log.Information($"=================注入校验器:{typeof(BusinessDivisionCreateValidator).FullName}");
         _repository = repository;
-        
-        RuleFor(bu=>bu.BuName)
+
+        RuleFor(bu => bu.BuName)
             .MaximumLength(50).WithMessage("事业部名称最大长度不超过50个字符,").WithSeverity(Severity.Warning)
             .NotEmpty().WithMessage("事业部名称不能为空").WithSeverity(Severity.Warning)
             .MustAsync(BeUniqueBuName).WithMessage("事业部已存在.");
     }
-    
+
     public async Task<bool> BeUniqueBuName(string title, CancellationToken cancellationToken)
     {
         return await _repository.GetAsQueryable().AllAsync(l => !l.BuName.Equals(title), cancellationToken);

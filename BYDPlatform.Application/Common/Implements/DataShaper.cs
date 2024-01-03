@@ -4,14 +4,14 @@ using BYDPlatform.Application.Common.Interfaces;
 
 namespace BYDPlatform.Application.Common.Implements;
 
-public class DataShaper<T>:IDataShaper<T> where T:class
+public class DataShaper<T> : IDataShaper<T> where T : class
 {
-    public PropertyInfo[] Properties { get; set; }
-
     public DataShaper()
     {
         Properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
     }
+
+    public PropertyInfo[] Properties { get; set; }
 
     public IEnumerable<ExpandoObject> ShapeDate(IEnumerable<T> entities, string fieldString)
     {
@@ -37,10 +37,7 @@ public class DataShaper<T>:IDataShaper<T> where T:class
             {
                 var property = Properties.FirstOrDefault(pi => pi.Name.Equals(field.Trim(),
                     StringComparison.InvariantCultureIgnoreCase));
-                if (property == null)
-                {
-                    continue;
-                }
+                if (property == null) continue;
                 requiredProperties.Add(property);
             }
         }

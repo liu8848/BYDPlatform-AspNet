@@ -64,15 +64,15 @@ public static class DependencyInjection
                     ValidAudience = configuration.GetSection("JwtSettings")["validAudience"],
                     IssuerSigningKey = new SymmetricSecurityKey(
                         Encoding.UTF8.GetBytes(
-                            configuration.GetSection("JwtSettings")["SecretKey"]?? "BYDPlatformApiSecretKey"))
+                            configuration.GetSection("JwtSettings")["SecretKey"] ?? "BYDPlatformApiSecretKey"))
                 };
             });
         services.AddAuthorization(options =>
             options.AddPolicy("OnlyAdmin", policy => policy.RequireRole("Administrator")));
 
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-        
-        
+
+
         services.BatchRegisterService();
         return services;
     }
@@ -90,13 +90,11 @@ public static class DependencyInjection
             );
             return optionBuilder.Options;
         }).InstancePerLifetimeScope();
-        
+
         builder.RegisterType<DomainEventService>().As<IDomainEventService>().InstancePerLifetimeScope();
 
         builder.RegisterType<BydPlatformDbContext>()
             .AsSelf()
             .InstancePerLifetimeScope();
     }
-
-    
 }

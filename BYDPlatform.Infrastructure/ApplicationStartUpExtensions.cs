@@ -1,4 +1,3 @@
-using Autofac;
 using BYDPlatform.Infrastructure.Identity;
 using BydPlatform.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Builder;
@@ -19,7 +18,7 @@ public static class ApplicationStartUpExtensions
         {
             var context = services.GetRequiredService<BydPlatformDbContext>();
             context.Database.Migrate();
-            
+
             // //认证
             var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
@@ -30,5 +29,4 @@ public static class ApplicationStartUpExtensions
             throw new Exception($"An error occurred migration the DB:{e.Message}");
         }
     }
-    
 }

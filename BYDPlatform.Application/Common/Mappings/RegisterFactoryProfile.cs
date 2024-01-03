@@ -4,7 +4,7 @@ using BYDPlatform.Domain.Entities;
 
 namespace BYDPlatform.Application.Common.Mappings;
 
-public class RegisterFactoryProfile:Profile
+public class RegisterFactoryProfile : Profile
 {
     public RegisterFactoryProfile()
     {

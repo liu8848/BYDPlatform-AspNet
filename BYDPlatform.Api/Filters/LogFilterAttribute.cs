@@ -6,11 +6,11 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace BYDPlatform.Api.Filters;
 
-public class LogFilterAttribute:IActionFilter
+public class LogFilterAttribute : IActionFilter
 {
-    private readonly ILogger<LogFilterAttribute> _logger;
     private readonly ICurrentUserService _currentUserService;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ILogger<LogFilterAttribute> _logger;
     private readonly IRepository<OperationLog> _repository;
 
     public LogFilterAttribute(
@@ -18,7 +18,7 @@ public class LogFilterAttribute:IActionFilter
         ICurrentUserService currentUserService,
         IHttpContextAccessor httpContextAccessor,
         IRepository<OperationLog> repository
-        )
+    )
     {
         _logger = logger;
         _currentUserService = currentUserService;
@@ -33,9 +33,10 @@ public class LogFilterAttribute:IActionFilter
         //获取控制器
         var controller = context.RouteData.Values["controller"];
         //获取传入参数
-        var param = context.ActionArguments.SingleOrDefault(x=>x.Value.ToString().Contains("Command")).Value;
-        
-        _logger.LogInformation($"Controller:{controller}, action:{action},Incoming request:{JsonSerializer.Serialize(param)}");
+        var param = context.ActionArguments.SingleOrDefault(x => x.Value.ToString().Contains("Command")).Value;
+
+        _logger.LogInformation(
+            $"Controller:{controller}, action:{action},Incoming request:{JsonSerializer.Serialize(param)}");
     }
 
     public void OnActionExecuted(ActionExecutedContext context)
@@ -45,19 +46,19 @@ public class LogFilterAttribute:IActionFilter
         //执行方法
         operationLog.Action = context.RouteData.Values["action"]?.ToString();
         //执行控制器
-        operationLog.Controller= context.RouteData.Values["controller"]?.ToString();
+        operationLog.Controller = context.RouteData.Values["controller"]?.ToString();
         //获取请求ip
-        operationLog.IpAddress= _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.MapToIPv4().ToString();
+        operationLog.IpAddress = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.MapToIPv4().ToString();
         //获取当前请求用户名
-        operationLog.User = string .IsNullOrEmpty(_currentUserService.UserName)?"anyone":_currentUserService.UserName;
+        operationLog.User =
+            string.IsNullOrEmpty(_currentUserService.UserName) ? "anyone" : _currentUserService.UserName;
         //执行时间
-        operationLog.ExecutedTime=DateTime.UtcNow;
+        operationLog.ExecutedTime = DateTime.UtcNow;
         //
         operationLog.RequestParams = context.HttpContext.Request.Path;
 
         if (context.Exception is not null)
         {
-            
             operationLog.ExecuteStatus = false;
             operationLog.ExceptionType = context.Exception.GetType().FullName;
             operationLog.ExceptionMsg = context.Exception.Message;
@@ -68,15 +69,14 @@ public class LogFilterAttribute:IActionFilter
         operationLog.ExecuteStatus = true;
         var result = (ObjectResult)context.Result!;
         //响应体
-        operationLog.ResponseBody =JsonSerializer.Serialize(result.Value).ToString() ;
-        
+        operationLog.ResponseBody = JsonSerializer.Serialize(result.Value);
+
         _repository.AddAsync(operationLog);
-        
+
         _logger.LogInformation($"Controller:{operationLog.Controller}, " +
                                $"action: {operationLog.Action}, " +
-                               $"ipAddress:{operationLog.IpAddress},"+
-                               $"user:{operationLog.User},"+
+                               $"ipAddress:{operationLog.IpAddress}," +
+                               $"user:{operationLog.User}," +
                                $"Executing response: {JsonSerializer.Serialize(result.Value)}");
     }
-    
 }

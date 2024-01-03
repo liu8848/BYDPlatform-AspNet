@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BYDPlatform.Application.BusinessDivision.Queries;
 
-public class GetBusinessDivisionQuery:IRequest<Domain.Entities.BusinessDivision>
+public class GetBusinessDivisionQuery : IRequest<Domain.Entities.BusinessDivision>
 {
     public int Id { get; set; } = 0;
     public string? BuName { get; set; }
@@ -20,7 +20,8 @@ public class GetBusinessDivision : IRequestHandler<GetBusinessDivisionQuery, Dom
         _repository = repository;
     }
 
-    public async Task<Domain.Entities.BusinessDivision?> Handle(GetBusinessDivisionQuery request, CancellationToken cancellationToken)
+    public async Task<Domain.Entities.BusinessDivision?> Handle(GetBusinessDivisionQuery request,
+        CancellationToken cancellationToken)
     {
         var bu = new Domain.Entities.BusinessDivision
         {
@@ -33,6 +34,5 @@ public class GetBusinessDivision : IRequestHandler<GetBusinessDivisionQuery, Dom
             .GetAsQueryable(spec)
             .AsNoTracking()
             .FirstOrDefaultAsync(cancellationToken);
-        
     }
 }

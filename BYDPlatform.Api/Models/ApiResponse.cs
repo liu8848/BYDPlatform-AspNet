@@ -8,10 +8,18 @@ public class ApiResponse<T>
     public bool Succeeded { get; set; }
     public string Message { get; set; }
 
-    public static ApiResponse<T> Fail(string errorMessage) => new() { Succeeded = false, Message = errorMessage };
+    public static ApiResponse<T> Fail(string errorMessage)
+    {
+        return new ApiResponse<T> { Succeeded = false, Message = errorMessage };
+    }
 
-    public static ApiResponse<T> Success(T data) => new() { Succeeded = true, Data = data };
+    public static ApiResponse<T> Success(T data)
+    {
+        return new ApiResponse<T> { Succeeded = true, Data = data };
+    }
 
-    public string ToJsonString() => JsonSerializer.Serialize(this);
-
+    public string ToJsonString()
+    {
+        return JsonSerializer.Serialize(this);
+    }
 }

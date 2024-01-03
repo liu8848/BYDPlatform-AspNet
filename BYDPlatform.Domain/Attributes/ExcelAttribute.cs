@@ -1,7 +1,7 @@
 namespace BYDPlatform.Domain.Attributes;
 
 [AttributeUsage(AttributeTargets.Property)]
-public class ExcelAttribute:Attribute
+public class ExcelAttribute : Attribute
 {
     public string EntityFieldName { get; set; } = "";
 

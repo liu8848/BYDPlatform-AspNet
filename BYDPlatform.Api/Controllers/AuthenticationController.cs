@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BYDPlatform.Api.Controllers;
 
 [ApiController]
-public class AuthenticationController:ControllerBase
+public class AuthenticationController : ControllerBase
 {
     private readonly IIdentityService _identityService;
     private readonly ILogger<AuthenticationController> _logger;
@@ -19,10 +19,7 @@ public class AuthenticationController:ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Authenticate([FromBody] UserForAuthentication userForAuthentication)
     {
-        if (!await _identityService.ValidateUserAsync(userForAuthentication))
-        {
-            return Unauthorized();
-        }
+        if (!await _identityService.ValidateUserAsync(userForAuthentication)) return Unauthorized();
 
         var token = await _identityService.CreateTokenAsync(true);
         return Ok(token);

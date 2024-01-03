@@ -21,12 +21,9 @@ public class DeleteBusinessDivisionCommandHandler : IRequestHandler<DeleteBusine
     public async Task<Unit> Handle(DeleteBusinessDivisionCommand request, CancellationToken cancellationToken)
     {
         var entity = await _repository.GetAsync(request.Id);
-        if (entity == null)
-        {
-            throw new NotFoundException(nameof(Domain.Entities.BusinessDivision), request.Id);
-        }
+        if (entity == null) throw new NotFoundException(nameof(Domain.Entities.BusinessDivision), request.Id);
 
-        await _repository.DeleteAsync(entity,cancellationToken);
+        await _repository.DeleteAsync(entity, cancellationToken);
         return Unit.Value;
     }
 }

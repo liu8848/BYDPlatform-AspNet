@@ -9,7 +9,7 @@ public static class PropertyTypeConstant
     public const string INT64 = "System.Int64";
     public const string BYTE = "System.Byte";
 
-    public const string DATETIME  = "System.DateTime";
+    public const string DATETIME = "System.DateTime";
 
     public const string BOOLEAN = "System.Boolean";
 
@@ -17,5 +17,4 @@ public static class PropertyTypeConstant
     public const string DOUBLE = "System.Double";
 
     public const string DBNULL = "System.DBNull";
-
 }

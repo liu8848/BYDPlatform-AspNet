@@ -12,14 +12,15 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace BYDPlatform.Infrastructure.Identity;
 
-public class IdentityService:IIdentityService
+public class IdentityService : IIdentityService
 {
-    private readonly ILogger<IdentityService> _logger;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<IdentityService> _logger;
     private readonly UserManager<ApplicationUser> _userManager;
     private ApplicationUser? _applicationUser;
 
-    public IdentityService(ILogger<IdentityService> logger, IConfiguration configuration, UserManager<ApplicationUser> userManager)
+    public IdentityService(ILogger<IdentityService> logger, IConfiguration configuration,
+        UserManager<ApplicationUser> userManager)
     {
         _logger = logger;
         _configuration = configuration;
@@ -41,11 +42,9 @@ public class IdentityService:IIdentityService
     {
         _applicationUser = await _userManager.FindByNameAsync(userForAuthentication.UserName!);
 
-        var result = _applicationUser != null && await _userManager.CheckPasswordAsync(_applicationUser, userForAuthentication.Password!);
-        if (!result)
-        {
-            _logger.LogWarning($"{nameof(ValidateUserAsync)}:认证失败，账号或密码错误");
-        }
+        var result = _applicationUser != null &&
+                     await _userManager.CheckPasswordAsync(_applicationUser, userForAuthentication.Password!);
+        if (!result) _logger.LogWarning($"{nameof(ValidateUserAsync)}:认证失败，账号或密码错误");
 
         return result;
     }
@@ -57,12 +56,23 @@ public class IdentityService:IIdentityService
         var tokenOptions = GenerateTokenOptions(signingCredentials, claims);
         var refreshToken = GeneratetRefreshToken();
         _applicationUser!.RefreshToken = refreshToken;
-        if(populateExpiry)
-            _applicationUser!.RefreshTokenExpiryTime=DateTime.Now.AddDays(7);
+        if (populateExpiry)
+            _applicationUser!.RefreshTokenExpiryTime = DateTime.Now.AddDays(7);
         await _userManager.UpdateAsync(_applicationUser);
 
         var accessToken = new JwtSecurityTokenHandler().WriteToken(tokenOptions);
         return new ApplicationToken(accessToken, refreshToken);
+    }
+
+    public async Task<ApplicationToken> RefreshTokenAsync(ApplicationToken token)
+    {
+        var principal = GetPrincipalFromExpiredToken(token.AccessToken);
+        var user = await _userManager.FindByNameAsync(principal.Identity?.Name);
+        if (user == null || user.RefreshToken != token.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.Now)
+            throw new BadHttpRequestException("provided token has some invalid value");
+
+        _applicationUser = user;
+        return await CreateTokenAsync(true);
     }
 
     private string GeneratetRefreshToken()
@@ -90,7 +100,7 @@ public class IdentityService:IIdentityService
             new(ClaimTypes.Name, _applicationUser!.UserName)
         };
         var roles = await _userManager.GetRolesAsync(_applicationUser);
-        claims.AddRange(roles.Select(role=>new Claim(ClaimTypes.Role,role)));
+        claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
         return claims;
     }
@@ -108,38 +118,28 @@ public class IdentityService:IIdentityService
         return tokenOptions;
     }
 
-    public async Task<ApplicationToken> RefreshTokenAsync(ApplicationToken token)
-    {
-        var principal = GetPrincipalFromExpiredToken(token.AccessToken);
-        var user = await _userManager.FindByNameAsync(principal.Identity?.Name);
-        if (user == null || user.RefreshToken != token.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.Now)
-        {
-            throw new BadHttpRequestException("provided token has some invalid value");
-        }
-
-        _applicationUser = user;
-        return await CreateTokenAsync(true);
-    }
-
     private ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
     {
         var jwtSettings = _configuration.GetSection("JwtSettings");
-        var tokenValidationParameters = new TokenValidationParameters {
+        var tokenValidationParameters = new TokenValidationParameters
+        {
             ValidateAudience = true,
             ValidateIssuer = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["JwtSettings"]?? "BYDPlatformApiSecretKey")), ValidateLifetime = true,
+            IssuerSigningKey =
+                new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(jwtSettings["JwtSettings"] ?? "BYDPlatformApiSecretKey")),
+            ValidateLifetime = true,
             ValidIssuer = jwtSettings["validIssuer"],
             ValidAudience = jwtSettings["validAudience"]
         };
-        
+
         var tokenHandler = new JwtSecurityTokenHandler();
         var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
-        if (securityToken is not JwtSecurityToken jwtSecurityToken || 
-            !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-        {
+        if (securityToken is not JwtSecurityToken jwtSecurityToken ||
+            !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256,
+                StringComparison.InvariantCultureIgnoreCase))
             throw new SecurityTokenException("Invalid token");
-        }
 
         return principal;
     }

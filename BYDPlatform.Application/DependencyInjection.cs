@@ -19,7 +19,7 @@ public static class DependencyInjection
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
 
         services.AddScoped(typeof(IDataShaper<>), typeof(DataShaper<>));
-        
+
         return services;
     }
 }

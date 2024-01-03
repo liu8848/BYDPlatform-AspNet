@@ -1,5 +1,4 @@
 using System.Reflection;
-using System.Runtime.InteropServices;
 using BYDPlatform.Application.Common.Interfaces;
 using BYDPlatform.Domain.Attributes;
 using BYDPlatform.Domain.Base;
@@ -8,14 +7,13 @@ using BYDPlatform.Domain.Entities;
 using BYDPlatform.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Serilog;
 
 namespace BydPlatform.Infrastructure.Persistence;
 
 public class BydPlatformDbContext : IdentityDbContext<ApplicationUser>
 {
-    private readonly IDomainEventService _domainEventService;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IDomainEventService _domainEventService;
 
     public BydPlatformDbContext(DbContextOptions<BydPlatformDbContext> options,
         IDomainEventService domainEventService,
@@ -35,11 +33,15 @@ public class BydPlatformDbContext : IdentityDbContext<ApplicationUser>
             switch (entry.State)
             {
                 case EntityState.Added:
-                    entry.Entity.CreatedBy = string.IsNullOrEmpty(_currentUserService.UserName)?"Anonymous":_currentUserService.UserName;
+                    entry.Entity.CreatedBy = string.IsNullOrEmpty(_currentUserService.UserName)
+                        ? "Anonymous"
+                        : _currentUserService.UserName;
                     entry.Entity.Created = DateTime.UtcNow;
                     break;
                 case EntityState.Modified:
-                    entry.Entity.LastModifiedBy = string.IsNullOrEmpty(_currentUserService.UserName)?"Anonymous":_currentUserService.UserName;
+                    entry.Entity.LastModifiedBy = string.IsNullOrEmpty(_currentUserService.UserName)
+                        ? "Anonymous"
+                        : _currentUserService.UserName;
                     entry.Entity.LastModified = DateTime.UtcNow;
                     break;
             }
@@ -60,12 +62,9 @@ public class BydPlatformDbContext : IdentityDbContext<ApplicationUser>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        
-        List<Type> types = GetAllAssemblyEntities();
-        foreach (var type in types)
-        {
-            modelBuilder.Entity(type);
-        }
+
+        var types = GetAllAssemblyEntities();
+        foreach (var type in types) modelBuilder.Entity(type);
     }
 
     private async Task DispatchEvents(DomainEvent[] events)
@@ -83,10 +82,7 @@ public class BydPlatformDbContext : IdentityDbContext<ApplicationUser>
 
         HashSet<string> loadedAssemblies = new();
 
-        foreach (var item in allAssemblies)
-        {
-            loadedAssemblies.Add(item.FullName!);
-        }
+        foreach (var item in allAssemblies) loadedAssemblies.Add(item.FullName!);
 
         Queue<Assembly> assembliesToCheck = new();
         assembliesToCheck.Enqueue(Assembly.GetEntryAssembly()!);
@@ -95,7 +91,6 @@ public class BydPlatformDbContext : IdentityDbContext<ApplicationUser>
         {
             var assemblyToCheck = assembliesToCheck.Dequeue();
             foreach (var reference in assemblyToCheck!.GetReferencedAssemblies())
-            {
                 if (!loadedAssemblies.Contains(reference.FullName))
                 {
                     var assembly = Assembly.Load(reference);
@@ -103,7 +98,6 @@ public class BydPlatformDbContext : IdentityDbContext<ApplicationUser>
                     loadedAssemblies.Add(reference.FullName);
                     allAssemblies.Add(assembly);
                 }
-            }
         }
 
         var types = allAssemblies.SelectMany(t => t.GetTypes())

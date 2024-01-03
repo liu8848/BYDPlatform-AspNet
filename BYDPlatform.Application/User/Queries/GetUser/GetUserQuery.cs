@@ -7,17 +7,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BYDPlatform.Application.User.Queries.GetUser;
 
-public class GetUserQuery:IRequest<UserBriefDto>
+public class GetUserQuery : IRequest<UserBriefDto>
 {
     public int Id { get; set; } = 0;
     public string? UserName { get; set; }
-    
 }
 
 public class GetUserQueryHandler : IRequestHandler<GetUserQuery, UserBriefDto>
 {
-    private readonly IRepository<Domain.Entities.User> _repository;
     private readonly IMapper _mapper;
+    private readonly IRepository<Domain.Entities.User> _repository;
 
     public GetUserQueryHandler(IRepository<Domain.Entities.User> repository, IMapper mapper)
     {
@@ -33,7 +32,7 @@ public class GetUserQueryHandler : IRequestHandler<GetUserQuery, UserBriefDto>
             UserName = request.UserName
         };
         var spec = new UserSpec(user);
-        
+
         return await _repository
             .GetAsQueryable(spec)
             .AsNoTracking()

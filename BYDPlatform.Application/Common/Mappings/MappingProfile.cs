@@ -3,9 +3,12 @@ using AutoMapper;
 
 namespace BYDPlatform.Application.Common.Mappings;
 
-public class MappingProfile:Profile
+public class MappingProfile : Profile
 {
-    public MappingProfile() => ApplyMappingFromAssembly(Assembly.GetExecutingAssembly());
+    public MappingProfile()
+    {
+        ApplyMappingFromAssembly(Assembly.GetExecutingAssembly());
+    }
 
     private void ApplyMappingFromAssembly(Assembly assembly)
     {

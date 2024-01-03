@@ -5,7 +5,7 @@ using BYDPlatform.Domain.DTOs.Base;
 
 namespace BYDPlatform.Application.Services.Base;
 
-public interface IBaseService<T> where T:class
+public interface IBaseService<T> where T : class
 {
     Task<T> GetById(int id);
     Task<List<T>> GetAll();

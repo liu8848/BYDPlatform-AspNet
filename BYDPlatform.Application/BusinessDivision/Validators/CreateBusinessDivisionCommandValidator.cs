@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BYDPlatform.Application.BusinessDivision.Validators;
 
-public class CreateBusinessDivisionCommandValidator:AbstractValidator<CreateBusinessDivisionCommand>
+public class CreateBusinessDivisionCommandValidator : AbstractValidator<CreateBusinessDivisionCommand>
 {
     private readonly IRepository<Domain.Entities.BusinessDivision> _repository;
 

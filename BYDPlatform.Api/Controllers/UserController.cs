@@ -7,7 +7,7 @@ namespace BYDPlatform.Api.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class UserController:ControllerBase
+public class UserController : ControllerBase
 {
     private readonly IMediator _mediator;
 

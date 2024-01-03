@@ -4,24 +4,35 @@ using Microsoft.EntityFrameworkCore.Query;
 
 namespace BYDPlatform.Application.Common.Implements;
 
-public abstract class SpecificationBase<T>:ISpecification<T>
+public abstract class SpecificationBase<T> : ISpecification<T>
 {
-    protected SpecificationBase() { }
-    protected SpecificationBase(Expression<Func<T, bool>> criteria) => Criteria = criteria;
-    public Expression<Func<T, bool>> Criteria { get; private set; }
-    public Func<IQueryable<T>, IIncludableQueryable<T, object>> Include { get; private set;}
+    protected SpecificationBase()
+    {
+    }
+
+    protected SpecificationBase(Expression<Func<T, bool>> criteria)
+    {
+        Criteria = criteria;
+    }
+
     public List<string> IncludeStrings { get; } = new();
-    public Expression<Func<T, object>> OrderBy { get; private set;}
-    public Expression<Func<T, object>> OrderByDescending { get; private set;}
-    public int Take { get; private set;}
-    public int Skip { get; private set;}
-    public bool IsPagingEnabled { get; private set;}
+    public Expression<Func<T, bool>> Criteria { get; private set; }
+    public Func<IQueryable<T>, IIncludableQueryable<T, object>> Include { get; private set; }
+    public Expression<Func<T, object>> OrderBy { get; private set; }
+    public Expression<Func<T, object>> OrderByDescending { get; private set; }
+    public int Take { get; private set; }
+    public int Skip { get; private set; }
+    public bool IsPagingEnabled { get; private set; }
 
-    public void AddCriteria(Expression<Func<T, bool>> criteria) =>
+    public void AddCriteria(Expression<Func<T, bool>> criteria)
+    {
         Criteria = Criteria is not null ? Criteria.AndAlso(criteria) : criteria;
+    }
 
-    protected virtual void AddInclude(Func<IQueryable<T>, IIncludableQueryable<T, object>> includeExpression) =>
+    protected virtual void AddInclude(Func<IQueryable<T>, IIncludableQueryable<T, object>> includeExpression)
+    {
         Include = includeExpression;
+    }
 
     protected virtual void ApplyPaging(int skip, int take)
     {
@@ -30,12 +41,16 @@ public abstract class SpecificationBase<T>:ISpecification<T>
         IsPagingEnabled = true;
     }
 
-    protected virtual void ApplyOrderBy(Expression<Func<T, object>> orderByExpression) => OrderBy = orderByExpression;
+    protected virtual void ApplyOrderBy(Expression<Func<T, object>> orderByExpression)
+    {
+        OrderBy = orderByExpression;
+    }
 
-    protected virtual void ApplyOrderByDescending(Expression<Func<T, object>> orderByDescendingExpression) =>
+    protected virtual void ApplyOrderByDescending(Expression<Func<T, object>> orderByDescendingExpression)
+    {
         OrderByDescending = orderByDescendingExpression;
+    }
 }
-
 
 //扩展方法
 public static class ExpressionExtension
@@ -49,26 +64,28 @@ public static class ExpressionExtension
 
         var rightVisitor = new ReplaceExpressionVisitor(expr2.Parameters[0], parameter);
         var right = rightVisitor.Visit(expr2.Body);
-        
-        return Expression.Lambda<Func<T,bool>>(
-            Expression.AndAlso(left??throw new InvalidOperationException(),
-                right??throw new InvalidOperationException()),parameter);
-            
+
+        return Expression.Lambda<Func<T, bool>>(
+            Expression.AndAlso(left ?? throw new InvalidOperationException(),
+                right ?? throw new InvalidOperationException()), parameter);
     }
-    
-    private class ReplaceExpressionVisitor:ExpressionVisitor
+
+    private class ReplaceExpressionVisitor : ExpressionVisitor
     {
+        private readonly Expression _newValue;
+
+        private readonly Expression _oldValue;
+
         public ReplaceExpressionVisitor(Expression oldValue, Expression newValue)
         {
             _oldValue = oldValue;
             _newValue = newValue;
         }
 
-        private readonly Expression _oldValue;
-        private readonly Expression _newValue;
 
-
-        public override Expression Visit(Expression node) => node == _oldValue ? _newValue : base.Visit(node);
+        public override Expression Visit(Expression node)
+        {
+            return node == _oldValue ? _newValue : base.Visit(node);
+        }
     }
-    
 }

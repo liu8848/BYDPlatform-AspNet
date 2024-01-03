@@ -8,7 +8,7 @@ namespace BYDPlatform.Domain.Entities;
 [Table("test")]
 public class Test
 {
-    [Column("id",TypeName = "int(11)")]
+    [Column("id", TypeName = "int(11)")]
     [Key]
     public int Id { get; set; }
 }
