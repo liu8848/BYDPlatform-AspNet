@@ -4,7 +4,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using BYDPlatform.Domain.Attributes;
 using BYDPlatform.Domain.Constant;
+using FluentValidation.Results;
 using NPOI.HSSF.UserModel;
+using NPOI.HSSF.Util;
 using NPOI.SS.Formula.Eval;
 using NPOI.SS.UserModel;
 using NPOI.SS.Util;
@@ -57,6 +59,7 @@ public static class ExcelHelper
         return ms;
     }
 
+    
     /// <summary>
     ///     将DataTable导出为Excel（通过文件流）
     /// </summary>
@@ -87,13 +90,43 @@ public static class ExcelHelper
 
         //填充内容
         CreateCellContent(sheet, workbook, dt, rowIndex, dateFormat);
-        var fileName = $"temp{DateTime.Now.ToString("yyyyMMddhhmmss")}.xlsx";
+        var fileName = $"temp{DateTime.Now:yyyyMMddhhmmss}.xlsx";
         var fs = new FileStream($"./{fileName}", FileMode.OpenOrCreate, FileAccess.ReadWrite);
         workbook.Write(fs);
 
         return fs;
     }
+    
+    public static FileStream ExportDataTableWithErrorMsg<T>(
+        DataTable dt,List<List<ValidationFailure>>fl,
+        string sheetName="Sheet1",string headerText="",int headerIndex=-1,
+        string dateFormat="yyyy-mm-dd hh:mm:ss"
+        )
+    {
+        IWorkbook workbook = new XSSFWorkbook();
+        ISheet sheet;
+        var dataStyle = workbook.CreateCellStyle();
+        var format = workbook.CreateDataFormat();
+        dataStyle.DataFormat = format.GetFormat(dateFormat);
+        //取得列宽
+        var arrColWidth = GetContentLength(dt);
 
+        if (workbook.GetSheetIndex(sheetName) >= 0) workbook.RemoveSheetAt(workbook.GetSheetIndex(sheetName));
+
+        sheet = workbook.CreateSheet(sheetName);
+        
+        //创建表头
+        var rowIndex = CreateHeader(sheet, workbook, arrColWidth, dt.Columns, headerIndex, headerText);
+        
+        //填充内容
+        CreateContentWithErrorMsg<T>(sheet,workbook,dt,fl,rowIndex);
+        
+        var fileName = $"temp{DateTime.Now:yyyyMMddhhmmss}.xlsx";
+        var fs = new FileStream($"./{fileName}", FileMode.OpenOrCreate, FileAccess.ReadWrite);
+        workbook.Write(fs);
+
+        return fs;
+    }
 
     /// <summary>
     ///     根据DataTable的Column集合创建表头
@@ -219,7 +252,100 @@ public static class ExcelHelper
                         break;
                 }
             }
+            rowIndex++;
+        }
+    }
 
+    public static void CreateContentWithErrorMsg<T>(ISheet sheet, IWorkbook workbook, DataTable dt,
+        List<List<ValidationFailure>> failureList,int rowIndex,string dateFormat="yyyy-mm-dd hh:mm:ss")
+    {
+        
+        var mapping = GetPropertyMapping<T>();
+
+        for (int i = 0; i < dt.Rows.Count; i++)
+        {
+            var row = dt.Rows[i];
+            var failureMsg = failureList[i];
+            
+            #region 填充每行具体信息
+            var dataRow = sheet.CreateRow(rowIndex);
+            foreach (DataColumn column in dt.Columns)
+            {
+                var newCell = dataRow.CreateCell(column.Ordinal);
+                var drValue = row[column].ToString();
+                switch (column.DataType.ToString())
+                {
+                    case PropertyTypeConstant.STRING:
+                        double result;
+                        if (IsNumeric(drValue, out result))
+                        {
+                            double.TryParse(drValue, out result);
+                            newCell.SetCellValue(result);
+                            break;
+                        }
+
+                        newCell.SetCellValue(drValue);
+                        break;
+                    case PropertyTypeConstant.DATETIME:
+                        DateTime dateV;
+                        DateTime.TryParse(drValue, out dateV);
+                        newCell.SetCellValue(dateV);
+                        newCell.CellStyle.DataFormat = workbook.CreateDataFormat().GetFormat(dateFormat);
+                        break;
+                    case PropertyTypeConstant.BOOLEAN:
+                        var boolV = false;
+                        bool.TryParse(drValue, out boolV);
+                        newCell.SetCellValue(boolV);
+                        break;
+                    case PropertyTypeConstant.INT16:
+                    case PropertyTypeConstant.INT32:
+                    case PropertyTypeConstant.INT64:
+                    case PropertyTypeConstant.BYTE:
+                        var intV = 0;
+                        int.TryParse(drValue, out intV);
+                        newCell.SetCellValue(intV);
+                        break;
+                    case PropertyTypeConstant.DECIMAL:
+                    case PropertyTypeConstant.DOUBLE:
+                        double doubV = 0;
+                        double.TryParse(drValue, out doubV);
+                        newCell.SetCellValue(doubV);
+                        break;
+                    case PropertyTypeConstant.DBNULL:
+                        newCell.SetCellValue("");
+                        break;
+                    default:
+                        newCell.SetCellValue(drValue);
+                        break;
+                }
+            }
+            #endregion
+
+            #region 填充错误信息
+
+            foreach (var failure in failureMsg)
+            {
+                var propertyName = failure.PropertyName;
+                var msg = failure.ErrorMessage;
+                var columnName = mapping.GetValueOrDefault(propertyName);
+                if (string.IsNullOrEmpty(columnName)) continue;
+                var cell = dataRow.GetCell(dt.Columns.IndexOf(columnName));
+
+
+                //设置样式
+                var cellStyle = workbook.CreateCellStyle();
+                cellStyle.FillForegroundColor = HSSFColor.Red.Index;
+                cellStyle.FillPattern = FillPattern.SolidForeground;
+                cell.CellStyle = cellStyle;
+                
+                //设置批注
+                var drawing = sheet.CreateDrawingPatriarch();
+                var comment = drawing.CreateCellComment(new XSSFClientAnchor());
+                comment.String = new XSSFRichTextString(msg);
+                cell.CellComment = comment;
+            }
+            #endregion
+            
             rowIndex++;
         }
     }
@@ -264,6 +390,26 @@ public static class ExcelHelper
         }
 
         return table;
+    }
+
+    /// <summary>
+    /// 获取实体类字段名与Excel列名映射
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <returns>Dictionary(字段名,列名)</returns>)
+    public static Dictionary<string, string> GetPropertyMapping<T>()
+    {
+        var propertyInfos = typeof(T).GetProperties()
+            .Where(p=>p.GetCustomAttributes(typeof(ExcelAttribute),false).Length>0)
+            .ToList();
+        var dic = new Dictionary<string,string>();
+        foreach (var property in propertyInfos)
+        {
+            var attribute = (ExcelAttribute)property.GetCustomAttribute(typeof(ExcelAttribute))!;
+            dic.Add(attribute.EntityFieldName,attribute.ExcelFieldName);
+        }
+
+        return dic;
     }
 
 

@@ -9,6 +9,7 @@ using BYDPlatform.Application.Services.Factory;
 using BYDPlatform.Domain.DTOs.RegisterFactory;
 using BYDPlatform.Domain.Entities;
 using FluentValidation;
+using FluentValidation.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -102,26 +103,36 @@ public class FactoryController : ControllerBase
     public async Task<IActionResult> BatchInsert([FromForm(Name = "file")] IFormFile file)
     {
         var createList = ExcelHelper.ImportExcelToEntityList<RegisterFactoryCreateOrUpdateDto>(file.OpenReadStream());
+        
+        //返回三个key-value
+        //<"success",List<RegisterFactoryCreateOrUpdateDto>>
+        //<"error",List<RegisterFactoryCreateOrUpdateDto>>
+        //<"failure",List<List<ValidationFailure>>>
         var validateResultDic = await _validator.ValidateList(createList);
         var insertList = (List<RegisterFactoryCreateOrUpdateDto>)validateResultDic["success"];
 
         var factories = _mapper.Map<List<RegisterFactory>>(insertList);
+        
         if (factories.Count > 0)
             await _factoryService.BatchInsert(factories);
 
         var errorList = (List<RegisterFactoryCreateOrUpdateDto>)validateResultDic["error"];
+        var failureList = (List<List<ValidationFailure>>)validateResultDic["failure"];
+        
         var dataTable = ExcelHelper.ListToDataTable(errorList);
-        // var memoryStream = ExcelHelper.ExportDataTable("校验结果",dataTable);
-
-        // var fs = ExcelHelper.ExportDataTable(dataTable);
 
         if (errorList.Count == 0)
             return Ok($"成功导入{factories.Count}条数据！");
-        using var fs = ExcelHelper.ExportDataTable(dataTable);
+        
+        // using var fs = ExcelHelper.ExportDataTable(dataTable);
 
-        return new FileStreamResult(fs, "application/vnd.ms-excel;charset=utf-8")
+        using (var fs = ExcelHelper.ExportDataTableWithErrorMsg<RegisterFactoryCreateOrUpdateDto>(dataTable,
+                   failureList))
         {
-            FileDownloadName = "错误列表.xlsx"
-        };
+            return new FileStreamResult(fs, "application/vnd.ms-excel;charset=utf-8")
+            {
+                FileDownloadName = "错误列表.xlsx"
+            };
+        }
     }
 }
